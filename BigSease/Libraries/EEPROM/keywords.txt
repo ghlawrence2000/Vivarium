@@ -1,0 +1,38 @@
+#######################################
+# Syntax Coloring Map For EEPROM
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+EEPROM	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+read		KEYWORD2
+readByte	KEYWORD2
+readWord	KEYWORD2
+readDWord	KEYWORD2
+readQWord	KEYWORD2
+readFloat	KEYWORD2
+readDouble	KEYWORD2
+write		KEYWORD2
+writeByte	KEYWORD2
+writeWord	KEYWORD2
+writeDWord	KEYWORD2
+writeQWord	KEYWORD2
+writeFloat	KEYWORD2
+writeDouble	KEYWORD2
+writeAll	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################

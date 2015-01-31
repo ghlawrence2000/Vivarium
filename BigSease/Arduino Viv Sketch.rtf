@@ -1,0 +1,589 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1344\cocoasubrtf360
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs24 \cf0 // Vivarium Management Controller w/ 7" touchscreen Interface\
+// Written by David Sease, aka Bigsease30\
+// Much code was swiped, modified, and integrated or otherwise inspired from other public works\
+// All code is public domain, feel free to use, abuse, edit, and share\
+// Written for Arduino Mega 2560\
+\
+// VERSION:  1.0\
+// - initial version\
+\
+// CODE ORDER:\
+// variables & setup\
+// main loop\
+// routines to draw every screen\
+// code to capture all touches\
+// all other routines\
+\
+////////////////////////////  BEGIN GLOBAL VARIABLES  /////////////////////////////////////\
+///////////////////////////////////////////////////////////////////////////////////////////\
+///////////////////////////////////////////////////////////////////////////////////////////\
+\
+#include <Wire.h> // needed by tons of stuff\
+#include <EEPROM.h>  // used to store and retrieve settings from memory\
+#include <UTFT.h>  // used to interface with the TFT display\
+#include <UTouch.h>  // used to interface with the touch controller on the TFT display\
+#include <tinyFAT.h> // used to access the SD card\
+#include <UTFT_tinyFAT.h>  // used to read .raw images from the SD card\
+#include <RTClib.h>\
+#include <Time.h> // allows conversion to UNIX time for easier date/time math\
+#include <TimeAlarms.h>  // used to power schedules\
+#include <OneWire.h> // network library to communicate with the DallasTemperature sensor, \
+#include <DallasTemperature.h>  // library for the Temp sensor itself\
+\
+// Declare which fonts we will be using\
+extern uint8_t SmallFont[];\
+extern uint8_t Sinclair_S[];\
+extern uint8_t arial_bold[];\
+extern uint8_t Ubuntubold[];\
+\
+// Declare Pins for Relay\
+// all analog to save on digital pins\
+#define LIGHTS1 A0     // Arduino Name / Pins                   \
+#define LIGHTS2 A1                        \
+#define TEMP1 A2                        \
+#define FOGGER1 A3\
+#define MISTING1 A4\
+#define AUX1 A5\
+\
+byte backLight = 255;  // startup brightness to 100%\
+boolean backlightTouch = true; // initial setting of true to allow the screen to stay bright after boot\
+\
+// Pins for temperature sensors\
+#define ONE_WIRE_BUS_W 8         //Temp sensor on pin 8\
+//#define TEMPERATURE_PRECISION 9\
+\
+// for time\
+RTC_DS1307 rtc;\
+// for time calcuation, we need to know the current time zone offset\
+//int UTC_Offset=-5;\
+\
+// Setup a oneWire instance to communicate with any OneWire devices\
+OneWire oneWireW(ONE_WIRE_BUS_W);\
+\
+// Pass our oneWire reference to Dallas Temperature. \
+DallasTemperature sensorW(&oneWireW);      //temp sensor\
+\
+\
+// initiate the screen and touch\
+UTFT myGLCD(CTE70CPLD,38,39,40,41); // start up an instance of the TFT screen\
+UTouch  myTouch( 6, 5, 4, 3, 2);  // start up an instance of for touch\
+\
+UTFT_tinyFAT myFiles(&myGLCD);  // start up an instance to read images from the SD card\
+\
+byte dispScreen=1;    // screens are listed below                       \
+// 1-home, 2-lights, , 3-temp, 4-fogger, 5-mister\
+// 6-fan, 7-clock, 8-screen\
+\
+byte scheduleItem; // track which item is being scheduled\
+\
+boolean updateTime=true;  // keep track of when to udpate the clock\
+\
+int x, y; //touch coordinates\
+\
+// days and month character strings for displaing at the top of the screen\
+char *Day[] = \{\
+  "","Sun","Mon","Tue","Wed","Thu","Fri","Sat"\};\
+char *Mon[] = \{\
+  "","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"\};\
+  \
+// small power icons for the home screen, off and on\
+char *pwrLightIconS[] = \{\
+  "swon.raw","swoff.raw"\};  \
+\
+\
+// used for time\
+struct RTC_T\
+\{  \
+  int tHour;\
+  int tMinute;\
+  int tSecond;\
+  int tDow;\
+  int tDay;\
+  int tMonth;\
+  int tYear;\
+\} \
+tmpRTC, prevRTC, saveRTC;\
+\
+/* // used for storing power states of relays\
+struct PWR\
+\{  \
+  byte LIGHTS1;\
+  byte LIGHTS2;\
+  byte TEMP1;\
+  byte FOGGER1;\
+  byte MISTING1;\
+  byte AUX1;\
+\} \
+*/\
+\
+// various millis to keep track of\
+unsigned long prevMillisTouch = 0; // track time between touches\
+unsigned long prevMillis5sec = 0; // track 5 seconds for refreshing clock and temp\
+unsigned long millisDim = 0; // used for brightness adjustment\
+unsigned long millisHome = 0; // used for returning home after configured time\
+\
+////////////////////////////////////////////////////////////////////////////////////////////\
+////////////////////////////////// VOID SETUP CODE /////////////////////////////////////////\
+////////////////////////////////////////////////////////////////////////////////////////////\
+\
+void setup()\
+\{\
+\
+  // set default values for the first ever run, you can comment this out after the first run if you want\
+  //firstRunSetup();  \
+  \
+  // initiate the screen and touch\
+  myGLCD.InitLCD(LANDSCAPE);\
+  myTouch.InitTouch(LANDSCAPE);\
+  myTouch.setPrecision(PREC_MEDIUM);\
+\
+  // init SD card\
+  file.setSSpin(53);\
+  file.initFAT(SPISPEED_VERYHIGH); \
+   \
+  Wire.begin();\
+  rtc.begin(); // Start the Clock\
+  \
+  delay(250);\
+  \
+  // start serial port\
+  Serial.begin(9600);\
+   \
+   \
+  if (! rtc.isrunning()) \
+  \{\
+    // If no RTC is installed, alert on serial\
+    Serial.println("RTC is NOT running!\\n");  // Store this string in PROGMEM\
+  \}\
+  else Serial.println("RTC is running!\\n");  // Store this string in PROGMEM\
+\
+\
+  //RTC.getTime();\
+  setSyncProvider(syncProvider);     // reference our syncProvider function instead of RTC_DS1307::get()  \
+ \
+  // Turns OFF all relays until called in code\
+  digitalWrite(LIGHTS1, HIGH);\
+  digitalWrite(LIGHTS2, HIGH);\
+  digitalWrite(TEMP1, HIGH);\
+  digitalWrite(FOGGER1, HIGH);  \
+  digitalWrite(MISTING1, HIGH);\
+  digitalWrite(AUX1, HIGH);  \
+  \
+  // Initialise the Arduino data pins for OUTPUT\
+  pinMode(LIGHTS1, OUTPUT);       \
+  pinMode(LIGHTS2, OUTPUT);\
+  pinMode(TEMP1, OUTPUT);\
+  pinMode(FOGGER1, OUTPUT);\
+  pinMode(MISTING1, OUTPUT);\
+  pinMode(AUX1, OUTPUT);\
+  delay(250); //Check that all relays are inactive at Reset \
+  \
+  myGLCD.clrScr();\
+\
+  // boot up logo\
+  myFiles.loadBitmap(230, 40, 378, 268, "Logo.raw");\
+  myFiles.loadBitmap(340, 360, 149, 47, "Copy.raw");\
+  delay(6000);  \
+  \
+   myGLCD.clrScr();  \
+   \
+  // display home screen\
+  screenHome();   \
+  \
+\}\
+\
+time_t syncProvider()\
+\{\
+  //this does the same thing as RTC_DS1307::get()\
+  return rtc.now().unixtime();\
+\}\
+\
+////////////////////////////////////////////////////////////////////////////////////////////\
+/////////////////////////////////// VOID LOOP CODE /////////////////////////////////////////\
+////////////////////////////////////////////////////////////////////////////////////////////\
+\
+void loop()\
+\{\
+  unsigned long currentMillis = millis(); // get current millis\
+  \
+  // check for touch events\
+  if (myTouch.dataAvailable())  \{\
+    if (currentMillis - prevMillisTouch > 500) // make sure it's been .5 sec between touches\
+    \{\
+      // set backlight touch if not already set and turn up brightness\
+      if (backlightTouch==false) // backlight touch is for adjusting brightness after touch\
+      \{\
+        backLight=255;\
+        //analogWrite(screenBrightPin, backLight);\
+        backlightTouch=true;\
+      \}\
+\
+      prevMillisTouch=currentMillis; // reset the touch timer\
+      millisDim=currentMillis; // reset screen dim timer\
+      millisHome=currentMillis; // reset return home timer\
+\
+      Serial.print("Updating millisHome to: ");\
+      Serial.print(millisHome);\
+      Serial.print("\\n");\
+\
+      processMyTouch();\
+    \}\
+  \}  \
+  \
+  // Get the time in seconds (since 1970)\
+  unsigned long rightNow = now();  \
+  \
+  \
+  Serial.print("X=");  \
+  Serial.print(x);\
+  Serial.print(" ; "); \
+  Serial.print("Y=");  \
+  Serial.println(y);\
+  delay(1000);  \
+    \
+\}\
+\
+////////////////////////////////////////////////////////////////////////////////////////////\
+///////////////////////////////////// PAGE SETUP ///////////////////////////////////////////\
+////////////////////////////////////////////////////////////////////////////////////////////\
+\
+void screenHome()  // draw main home screen showing overview info\
+\{\
+\
+  if (dispScreen!=1)   myGLCD.clrScr(); // clear if not home\
+\
+  dispScreen=1;  // set screen so we can know what screen was touched later\
+\
+  myFiles.loadBitmap(0, 0, 800, 480, "1Home.raw");\
+  \
+  // draw power status of outputs\
+  //myFiles.loadBitmap(557, 416, 22, 22, pwrLightIconS[globalPower.pwrLight1]);  \
+\
+\}\
+\
+void screenLights()  // start the feeding cycle and draw the feeding screen\
+\{\
+\
+  myGLCD.clrScr();\
+  dispScreen=2;\
+\
+  myFiles.loadBitmap(0, 0, 800, 480, "2Lights.raw");;\
+   \
+\}\
+\
+void screenTemp()  // start the feeding cycle and draw the feeding screen\
+\{\
+\
+  myGLCD.clrScr();\
+  dispScreen=3;\
+\
+  myFiles.loadBitmap(0, 0, 800, 480, "3Temp.raw");;\
+   \
+\}\
+\
+void screenFogger()  // start the feeding cycle and draw the feeding screen\
+\{\
+\
+  myGLCD.clrScr();\
+  dispScreen=4;\
+\
+  myFiles.loadBitmap(0, 0, 800, 480, "4Fogger.raw");;\
+   \
+\}\
+\
+void screenMist()  // start the feeding cycle and draw the feeding screen\
+\{\
+\
+  myGLCD.clrScr();\
+  dispScreen=5;\
+\
+  myFiles.loadBitmap(0, 0, 800, 480, "5Misting.raw");;\
+   \
+\}\
+\
+void screenFan()  // start the feeding cycle and draw the feeding screen\
+\{\
+\
+  myGLCD.clrScr();\
+  dispScreen=6;\
+\
+  myFiles.loadBitmap(0, 0, 800, 480, "6Fan.raw");;\
+   \
+\}\
+\
+void screenClock()  // start the feeding cycle and draw the feeding screen\
+\{\
+\
+  myGLCD.clrScr();\
+  dispScreen=7;\
+\
+  myFiles.loadBitmap(0, 0, 800, 480, "7Clock.raw");;\
+   \
+\}\
+\
+void screenScreen()  // start the feeding cycle and draw the feeding screen\
+\{\
+\
+  myGLCD.clrScr();\
+  dispScreen=8;\
+\
+  myFiles.loadBitmap(0, 0, 800, 480, "8Screen.raw");;\
+   \
+\}\
+\
+\
+////////////////////////////////////////////////////////////////////////////////////////////\
+/////////////////////////////////  PROCESS MY TOUCH ////////////////////////////////////////\
+////////////////////////////////////////////////////////////////////////////////////////////\
+\
+void processMyTouch() // this is a huge block dedicated to processing all touch screen events\
+\{\
+  //Serial.print("Touch Detected...\\n");\
+  myTouch.read();\
+  x=myTouch.getX();\
+  y=myTouch.getY();\
+  \
+  // we evaluate touch based on which screen we are in\
+  switch (dispScreen)\
+  \
+    \{              \
+\
+  case 1:  // home screen\
+  \
+    if ((x>=59)&&(x<=134)&&(y>=117)&&(y<=234)) // Light Settings Page\
+    \{\
+      screenLights();\
+    \}\
+    \
+    if ((x>=175)&&(x<=240)&&(y>=117)&&(y<=234)) // Temp Settings Page\
+    \{\
+      screenTemp();\
+    \}\
+    \
+    if ((x>=270)&&(x<=362)&&(y>=117)&&(y<=234)) // Fogger Settings Page\
+    \{\
+      screenFogger();\
+    \}  \
+    \
+    if ((x>=46)&&(x<=141)&&(y>=285)&&(y<=410)) // Misting Settings Page\
+    \{\
+      screenMist();\
+    \}\
+    \
+    if ((x>=171)&&(x<=237)&&(y>=285)&&(y<=410)) // Fan Settings Page\
+    \{\
+      screenFan();\
+    \}    \
+     \
+    if ((x>=270)&&(x<=370)&&(y>=285)&&(y<=410)) // Clock Page\
+    \{\
+      screenClock();\
+    \}\
+    \
+    if ((x>=712)&&(x<=779)&&(y>=13)&&(y<=77)) // Screen Page\
+    \{\
+      screenScreen();\
+    \}    \
+    break;\
+    \
+  case 2:    // Light screen\
+\
+    if ((x>=363)&&(x<=444)&&(y>=422)&&(y<=479))  // Return Home button  \
+    \{     \
+      screenHome();\
+    \}\
+    break;\
+    \
+  case 3:    // Temp screen\
+\
+    if ((x>=363)&&(x<=444)&&(y>=422)&&(y<=479))  // Return Home button  \
+    \{     \
+      screenHome();\
+    \}\
+    break;\
+\
+  case 4:    // Fogger screen\
+\
+    if ((x>=363)&&(x<=444)&&(y>=422)&&(y<=479))  // Return Home button  \
+    \{     \
+      screenHome();\
+    \}\
+    break;\
+\
+  case 5:    // Misting screen\
+\
+    if ((x>=363)&&(x<=444)&&(y>=422)&&(y<=479))  // Return Home button  \
+    \{     \
+      screenHome();\
+    \}\
+    break; \
+\
+  case 6:    // Fan screen\
+\
+    if ((x>=363)&&(x<=444)&&(y>=422)&&(y<=479))  // Return Home button  \
+    \{     \
+      screenHome();\
+    \}\
+    break; \
+\
+  case 7:    // Settings screen\
+\
+    if ((x>=363)&&(x<=444)&&(y>=422)&&(y<=479))  // Return Home button  \
+    \{     \
+      screenHome();\
+    \}\
+    break;    \
+   \
+   case 8:    // Clock screen\
+\
+    if ((x>=363)&&(x<=444)&&(y>=422)&&(y<=479))  // Return Home button  \
+    \{     \
+      screenHome();\
+    \}\
+    break;  \
+  \
+  case 9:    // Screen screen\
+\
+    if ((x>=363)&&(x<=444)&&(y>=422)&&(y<=479))  // Return Home button  \
+    \{     \
+      screenHome();\
+    \}\
+    break;  \
+ \
+  case 10:    // Wifi Settings\
+\
+    if ((x>=363)&&(x<=444)&&(y>=422)&&(y<=479))  // Return Home button  \
+    \{     \
+      screenHome();\
+    \}\
+    break;\
+   \}\
+\}\
+\
+void SaveTime()\
+\{        \
+  //RTC.stopClock();     \
+  saveRTC.tYear=(saveRTC.tYear+2000);\
+  //RTC.fillByYMD(saveRTC.tYear, saveRTC.tMonth, saveRTC.tDay);\
+  //RTC.fillByHMS(saveRTC.tHour, saveRTC.tMinute, saveRTC.tSecond);\
+  //RTC.setTime();\
+  //delay(10);\
+  rtc.adjust(DateTime(saveRTC.tYear, saveRTC.tMonth, saveRTC.tDay, saveRTC.tHour, saveRTC.tMinute, saveRTC.tSecond));\
+  //RTC.startClock();\
+  //delay(10);\
+  //RTC.now().unixtime(); \
+  updateTimeDate();\
+\}\
+\
+void updateTimeDate()\
+\{\
+\
+  //RTC.getTime();\
+  rtc.now();\
+\
+  // draw date and time\
+  myGLCD.setColor(240, 240, 255);\
+  myGLCD.setFont(Sinclair_S);\
+\
+  if ((hour()!=prevRTC.tHour) || (minute()!=prevRTC.tMinute) || updateTime) \{    //time\
+    prevRTC.tHour = hour();\
+    prevRTC.tMinute = minute();\
+    int hr_12;\
+    byte ampm;\
+    hr_12=prevRTC.tHour%12;\
+    if (hr_12==0) hr_12=12;\
+    if (hour()<=11) ampm=0;\
+    else ampm=1;\
+    printTime(hr_12, minute(), ampm, 180, 2);\
+  \}\
+  if ((day()!=prevRTC.tDay) || (month()!=prevRTC.tMonth) || (year()!=prevRTC.tYear)  || updateTime) \{     //date\
+    prevRTC.tDay = day();\
+    prevRTC.tMonth = month();\
+    printDate(40, 2);             \
+  \}\
+\
+\}\
+\
+void printTime(int thour, int tminute, byte ampm, int posx, int posy)\
+\{\
+  char tmpTime[8], charT[3];\
+\
+  tmpTime[0] = '\\0';\
+\
+  if (thour>=0 && thour<=9) \{          //add space\
+    strcat(tmpTime, " ");\
+    itoa(thour, charT, 10);\
+    strcat(tmpTime, charT);\
+  \}\
+  else \
+    itoa(thour, tmpTime, 10);\
+\
+  strcat(tmpTime, ":");  \
+\
+  if (tminute>=0 && tminute<=9) \{         //add 0\
+    strcat(tmpTime, "0");\
+    itoa(tminute, charT, 10);\
+    strcat(tmpTime, charT);\
+  \}\
+  else \{\
+    itoa(tminute, charT, 10);\
+    strcat(tmpTime, charT);\
+  \}\
+  if (ampm==0) strcat(tmpTime, "am");\
+  else strcat(tmpTime, "pm");\
+\
+  myGLCD.print(tmpTime, posx, posy);           // Display time  \
+\}\
+\
+void printDate(int x, int y) \
+\{\
+  char  chDate[25], tmpChar[5];\
+\
+  strcat(chDate, "     ");\
+  chDate[0] = '\\0';\
+  //strcat(chDate, Day[RTC.dow]);\
+  strcat(chDate, Day[weekday()]);\
+  strcat(chDate, ", ");\
+  //strcat(chDate, Mon[RTC.month]);\
+  strcat(chDate, Mon[month()]);\
+  strcat(chDate, " ");\
+  //  itoa(RTC.day, tmpChar, 10);\
+  itoa(day(), tmpChar, 10);\
+  strcat(chDate, tmpChar);\
+  // this line is for omitting year\
+  strcat(chDate, "  ");\
+\
+  //strcat(chDate, " ");\
+  //itoa(RTC.year, tmpChar, 10);\
+  //strcat(chDate, tmpChar);\
+  //strcat(chDate, "   ");\
+\
+  myGLCD.print(chDate, x, y);            //Display date \
+\}\
+\
+time_t tmConvert_t(int YYYY, byte MM, byte DD, byte hh, byte mm, byte ss)\
+\{\
+  tmElements_t tmSet;\
+  tmSet.Year = YYYY - 1970;\
+  tmSet.Month = MM;\
+  tmSet.Day = DD;\
+  tmSet.Hour = hh;\
+  tmSet.Minute = mm;\
+  tmSet.Second = ss;\
+  return makeTime(tmSet);         //convert to time_t\
+\}\
+\
+/*void firstRunSetup()\
+\{\
+\
+  // I'm going to save 65 into EEPROM bank 2014 as a check\
+  if (EEPROM.read(2014)!=65) \{\
+\
+    EEPROM.write(2014,65); // write to EEPROM so this never runs again\
+ */}
