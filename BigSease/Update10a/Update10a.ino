@@ -55,27 +55,37 @@
 //    27 //  Fog    : Fog.On2Min             //                                                     //
 //    28 //  Fog    : Fog.Dur2Min            //                                                     //
 //    29 //  Fog    : Fog.Dur2Sec            //                                                     //
-//    30 //  Fog    : Fog.OnDay              //                                                     //
-//    31 //  Mist   : Mist.Enable            // ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )     //
-//    32 //  Mist   : Mist.On1Hr             //                                                     //
-//    33 //  Mist   : Mist.On1Min            //                                                     //
-//    34 //  Mist   : Mist.Dur1Min           //                                                     //
-//    35 //  Mist   : Mist.Dur1Sec           //                                                     //
-//    36 //  Mist   : Mist.On2Hr             //                                                     //
-//    37 //  Mist   : Mist.On2Min            //                                                     //
-//    38 //  Mist   : Mist.Dur2Min           //                                                     //
-//    39 //  Mist   : Mist.Dur2Sec           //                                                     //
-//    40 //  Mist   : Mist.OnDay             //                                                     //
-//    41 //  Fan    : Fan.Enable             // ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )     //
-//    42 //  Fan    : Fan.On1Hr              //                                                     //
-//    43 //  Fan    : Fan.On1Min             //                                                     //
-//    44 //  Fan    : Fan.Dur1Min            //                                                     //
-//    45 //  Fan    : Fan.Dur1Sec            //                                                     //
-//    46 //  Fan    : Fan.On2Hr              //                                                     //
-//    47 //  Fan    : Fan.On2Min             //                                                     //
-//    48 //  Fan    : Fan.Dur2Min            //                                                     //
-//    49 //  Fan    : Fan.Dur2Sec            //                                                     //
-//    50 //  Fan    : Fan.OnDay              //                                                     //
+//    30 //  Fog    : Fog.OnDay              //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x3c=Tue-Fri       //
+//    31 //  Mist1&2: Mist.Enable            // ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )     //
+//    32 //  Mist1  : Mist.On1Hr             //                                                     //
+//    33 //  Mist1  : Mist.On1Min            //                                                     //
+//    34 //  Mist1  : Mist.Dur1Min           //                                                     //
+//    35 //  Mist1  : Mist.Dur1Sec           //                                                     //
+//    36 //  Mist2  : Mist.On2Hr             //                                                     //
+//    37 //  Mist2  : Mist.On2Min            //                                                     //
+//    38 //  Mist2  : Mist.Dur2Min           //                                                     //
+//    39 //  Mist2  : Mist.Dur2Sec           //                                                     //
+//    40 //  Mist2  : Mist.OnDay             //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x70 =Thu-Sat      //
+//    41 //  Mist3&4: Mist2.Enable           // ( F0 = 3 enable, 4 disable, FF = 3 & 4 enable )     //
+//    42 //  Mist3  : Mist2.On3Hr            //                                                     //
+//    43 //  Mist3  : Mist2.On3Min           //                                                     //
+//    44 //  Mist3  : Mist2.Dur3Min          //                                                     //
+//    45 //  Mist3  : Mist2.Dur3Sec          //                                                     //
+//    46 //  Mist4  : Mist2.On3Hr            //                                                     //
+//    47 //  Mist4  : Mist2.On3Min           //                                                     //
+//    48 //  Mist4  : Mist2.Dur3Min          //                                                     //
+//    49 //  Mist4  : Mist2.Dur3Sec          //                                                     //
+//    50 //  Mist4  : Mist2.OnDay            //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x0F =Sun-Wed      //
+//    51 //  Fan    : Fan.Enable             // ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )     //
+//    52 //  Fan    : Fan.On1Hr              //                                                     //
+//    53 //  Fan    : Fan.On1Min             //                                                     //
+//    54 //  Fan    : Fan.Dur1Min            //                                                     //
+//    55 //  Fan    : Fan.Dur1Sec            //                                                     //
+//    56 //  Fan    : Fan.On2Hr              //                                                     //
+//    57 //  Fan    : Fan.On2Min             //                                                     //
+//    58 //  Fan    : Fan.Dur2Min            //                                                     //
+//    59 //  Fan    : Fan.Dur2Sec            //                                                     //
+//    60 //  Fan    : Fan.OnDay              //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x0F =Sun-Wed      //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Decare Libraries                                                //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,12 +123,12 @@ extern uint8_t Ubuntubold[];                                                    
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                 Declare Pins for Relays, all analog to save on digital pins                      //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-#define LIGHTS1   A0                                                                                //                     
-#define LIGHTS2   A1                                                                                //    
-#define TEMP1     A2                                                                                //
-#define FOGGER1   A3                                                                                //
-#define MISTING1  A4                                                                                //
-#define FAN1      A5                                                                                //
+#define FAN1      A0                                                                                //
+#define MISTING1  A1                                                                                //
+#define FOGGER1   A2                                                                                //
+#define TEMP1     A3                                                                                //
+#define LIGHTS2   A4                                                                                //    
+#define LIGHTS1   A5                                                                                //                     
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                             Pins for sensors                                                     //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -157,7 +167,7 @@ const char *Day[] ={
 const char *Mon[] ={
   "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };                                                                                                  //
-tmElements_t tmpRTC, prevRTC, saveRTC;                                                              //  
+tmElements_t tmpRTC, prevRTC, lastLoopRTC;                                                              //  
 unsigned long tempTime;                                                                             // 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Various timings to keep track of                                //
@@ -212,13 +222,13 @@ float temp1 = 0.0, temp2 = 0.0, temp3 = 0.0, hum1 = 0.0;
 //byte FanOn2Hr, FanOn2Min, FanDur2Min, FanDur2Sec;
 //byte FanDay;
 // used for storing power states of relays
-byte Relay=0xFF,prevRelay=0;
-#define pwrLight1    0
-#define pwrLight2    1
-#define pwrTemp1     2
-#define pwrFogger1   3
-#define pwrMisting1  4
-#define pwrFan1      5
+byte Relay=0xff, prevRelay=64;
+#define pwrLight1    5
+#define pwrLight2    4
+#define pwrTemp1     3
+#define pwrFogger1   2
+#define pwrMisting1  1
+#define pwrFan1      0
 /*struct PWR
 {
   byte pwrLight1;
@@ -466,6 +476,7 @@ void loop()
   }
 
   // Get the time in seconds (since 1970)
+  myCopyTime(&lastLoopRTC);
   unsigned long rightNow = now();
   float tmptemp1, tmptemp2, tmptemp3, tmphum;
 
@@ -1624,7 +1635,7 @@ void firstRunSetup()
     EEPROM.write(27, 30); //       <- Fog.On2Min
     EEPROM.write(28, 19); //       <- Fog.Dur2Min
     EEPROM.write(29, 45); //       <- Fog.Dur2Sec
-    EEPROM.write(30, 255); //      <- Fog.OnDay
+    EEPROM.write(30, 127); //      <- Fog.OnDay
     EEPROM.write(31, 0x00);//      <- Mist.Enable ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )
     EEPROM.write(32, 8); //        <- Mist.On1Hr
     EEPROM.write(33, 15); //       <- Mist.On1Min
@@ -1634,17 +1645,27 @@ void firstRunSetup()
     EEPROM.write(37, 30); //       <- Mist.On2Min
     EEPROM.write(38, 19); //       <- Mist.Dur2Min
     EEPROM.write(39, 45); //       <- Mist.Dur2Sec
-    EEPROM.write(40, 255); //      <- Mist.OnDay
-    EEPROM.write(41, 0x00);//      <- Fan.Enable ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )
-    EEPROM.write(42, 8); //        <- Fan.On1Hr
-    EEPROM.write(43, 15); //       <- Fan.On1Min
-    EEPROM.write(44, 10); //       <- Fan.Dur1Min
-    EEPROM.write(45, 30); //       <- Fan.Dur1Sec
-    EEPROM.write(46, 16); //       <- Fan.On2Hr
-    EEPROM.write(47, 30); //       <- Fan.On2Min
-    EEPROM.write(48, 19); //       <- Fan.Dur2Min
-    EEPROM.write(49, 45); //       <- Fan.Dur2Sec
-    EEPROM.write(50, 255); //      <- Fan.OnDay
+    EEPROM.write(40, 127); //      <- Mist.OnDay
+    EEPROM.write(41, 0x00);//      <- Mist2.Enable ( F0 = 3 enable, 4 disable, FF = 3 & 4 enable )
+    EEPROM.write(42, 8); //        <- Mist2.On1Hr
+    EEPROM.write(43, 15); //       <- Mist2.On1Min
+    EEPROM.write(44, 10); //       <- Mist2.Dur1Min
+    EEPROM.write(45, 30); //       <- Mist2.Dur1Sec
+    EEPROM.write(46, 16); //       <- Mist2.On2Hr
+    EEPROM.write(47, 30); //       <- Mist2.On2Min
+    EEPROM.write(48, 19); //       <- Mist2.Dur2Min
+    EEPROM.write(49, 45); //       <- Mist2.Dur2Sec
+    EEPROM.write(50, 127); //      <- Mist2.OnDay  ( 0x7F = All week; 0/Sat/Fri/Thu/Wed/Tue/Mon/Sun ) 
+    EEPROM.write(51, 0x00);//      <- Fan.Enable ( 0xF0 = 1 enable, 2 disable, 0xFF = 1 & 2 enable )
+    EEPROM.write(52, 8); //        <- Fan.On1Hr
+    EEPROM.write(53, 15); //       <- Fan.On1Min
+    EEPROM.write(54, 10); //       <- Fan.Dur1Min
+    EEPROM.write(55, 30); //       <- Fan.Dur1Sec
+    EEPROM.write(56, 16); //       <- Fan.On2Hr
+    EEPROM.write(57, 30); //       <- Fan.On2Min
+    EEPROM.write(58, 19); //       <- Fan.Dur2Min
+    EEPROM.write(59, 45); //       <- Fan.Dur2Sec
+    EEPROM.write(60, 127); //      <- Fan.OnDay
   }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -1652,18 +1673,18 @@ void firstRunSetup()
 ////////////////////////////////////////////////////////////////////////////////////////////
 void relayOff(byte flag)
 {
-  Relay = Relay || (2^flag);  
+  Relay = Relay || (1<<flag);  
 }
 void relayOn(byte flag)
 {
-  Relay = Relay && (2^flag);  
+  Relay = Relay && (1<<flag);  
 }
 
 void procRelays(byte relay)
 {
   if(relay !=prevRelay)
   {
- if((relay && 1 ) == 1)    // Lights 1
+ if((relay & (1<<pwrLight1))==(1<<pwrLight1))   // Lights 1
  {
    myFiles.load(555,418,22,22,"swoff.raw",16,0);
  }
@@ -1671,15 +1692,15 @@ void procRelays(byte relay)
  {
    myFiles.load(555,418,22,22,"swon.raw",16,0); 
  }
- if((relay && 2 ) == 1)    // Lights 2
- {well
+ if((relay & (1<<pwrLight2))==(1<<pwrLight2))    // Lights 2
+ {
    myFiles.load(580,418,22,22,"swoff.raw",16,0);
  }
  else
  {
    myFiles.load(580,418,22,22,"swon.raw",16,0); 
  }
- if((relay && 4 ) == 1)    // Temp 1
+ if((relay & (1<<pwrTemp1))==(1<<pwrTemp1))    // Temp 1
  {  
    myFiles.load(614,418,22,22,"swoff.raw",16,0);
  }
@@ -1687,7 +1708,7 @@ void procRelays(byte relay)
  {
    myFiles.load(614,418,22,22,"swon.raw",16,0); 
  }
- if((relay && 8 ) == 1)    // Fog 1
+ if((relay & (1<<pwrFogger1))==(1<<pwrFogger1))    // Fog 1
  {   
    myFiles.load(655,418,22,22,"swoff.raw",16,0);
  }
@@ -1695,7 +1716,7 @@ void procRelays(byte relay)
  {
    myFiles.load(655,418,22,22,"swon.raw",16,0); 
  }
- if((relay && 16 ) == 1)   // Mist 1
+ if((relay & (1<<pwrMisting1))==(1<<pwrMisting1))   // Mist 1
  {
    myFiles.load(694,418,22,22,"swoff.raw",16,0);
  }
@@ -1703,7 +1724,7 @@ void procRelays(byte relay)
  {
    myFiles.load(694,418,22,22,"swon.raw",16,0); 
  } 
- if((relay && 32 ) == 1)   // Fan 1
+ if((relay & (1<<pwrFan1))==(1<<pwrFan1))   // Fan 1
  {
    myFiles.load(732,418,22,22,"swoff.raw",16,0);
  }
@@ -1714,3 +1735,4 @@ void procRelays(byte relay)
  prevRelay=relay;
   }
 }
+
