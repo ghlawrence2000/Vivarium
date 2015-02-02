@@ -6,8 +6,8 @@
 // All code is public domain, feel free to use, abuse, edit, and share                              //
 // Written for Arduino Mega 2560                                                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                     VERSION:  02/02/15 00:15GMT                                  //
-//                                        Development Version 10                                    //
+//                                     VERSION:  02/02/15 20:15GMT                                  //
+//                                        Development Version 13                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         CODE ORDER:                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -468,18 +468,10 @@ void setup()
   //  Serial.print("Relays ");
   //  Serial.println(Relay);
   //relayOn(pwrLight1)
-
-
-
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// VOID LOOP CODE /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
-
 void loop()
 {
 #if(!DS1307)
@@ -551,11 +543,10 @@ void loop()
     }
   }
   if ((rightNow - tempTime) >= 1) {
-      myGLCD.setColor(255, 77, 0);
-    
+    myGLCD.setColor(255, 77, 0);
+
     if (dispScreen == 1)
     {
-//      myGLCD.setFont(arial_bold);
       myGLCD.setFont(Ubuntubold);
     }
     if (dispScreen == 3)
@@ -643,12 +634,8 @@ void loop()
       }
     }
   }
-
   procRelays(Relay);
-
-
 }
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// PAGE SETUP ///////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -708,7 +695,6 @@ void screenHome()  // draw main home screen showing overview info
   myGLCD.setFont(Ubuntubold);
   myGLCD.print(hum, 425, 405);
 }
-
 void screenLights()  // Lights screen
 {
   DoScreen(2, 2);
@@ -773,31 +759,23 @@ void screenFogger()  // Fogging screen
 void screenMist()  // Misting Screen
 {
   DoScreen(7, 5);
-  dispScreen = 5;
 #if debug
   Serial.println(F("Misting Screen"));
 #endif
   updateTime = false;
 }
-
 void screenFan()  // Fan screen
 {
   myFiles.loadcpld(21, 6, 336, 74, "FanTitle.raw", 4, 6);
   DoScreen(4, 6);
-  //myGLCD.setDisplayPage(4);
-  //myGLCD.setWritePage(4);
-  dispScreen = 6;
 #if debug
   Serial.println(F("Fan Screen"));
 #endif
   updateTime = false;
-  //myFiles.load(0, 0, 800, 480, "6Fan.raw",3);
 }
-
 //////////////////////////////////////////////////////////////////////////////
 //   Modify the following 2 screens to be like the others for instant load  //
 //////////////////////////////////////////////////////////////////////////////
-
 void screenClock()  // Clock screen
 {
 #if fastest
@@ -811,7 +789,6 @@ void screenClock()  // Clock screen
   myFiles.load(0, 0, 800, 480, "7Clock.raw", 3);
   dispScreen = 7;
 #endif
-  //dispScreen = 7;
 #if debug
   Serial.println(F("Clock Screen"));
 #endif
@@ -820,13 +797,10 @@ void screenClock()  // Clock screen
   TouchRepeatDelay = 150;
   updateTime = false;
 }
-
 void screenScreen()  // Screen Settings
 {
 #if fastest
   DoScreen(6, 8);
-  //myGLCD.setWritePage(6);
-  //myGLCD.setDisplayPage(6);
 #else
   myGLCD.setWritePage(0);
   myGLCD.clrScr();
@@ -834,7 +808,6 @@ void screenScreen()  // Screen Settings
   myFiles.load(0, 0, 800, 480, "8Screen.raw", 3);
   dispScreen = 8;
 #endif
-  //dispScreen = 8;
 #if debug
   Serial.println(F("Screen Screen"));
 #endif
@@ -853,12 +826,9 @@ void screenScreen()  // Screen Settings
   TouchRepeatDelay = 150;
   updateTime = false;
 }
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////  PROCESS MY TOUCH ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
-
 void processMyTouch() // this is a huge block dedicated to processing all touch screen events
 {
   static volatile byte tempAD, tempTD, tempHD, tempBL;
@@ -871,19 +841,14 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
   myTouch.read();
   word x = myTouch.getX();
   word y = myTouch.getY();
-
   // we evaluate touch based on which screen we are in
   switch (dispScreen)
-
   {
-
     case 1:  // home screen
-
       if ((y >= 117) && (y < 235))
       {
         if ((x >= 59) && (x <= 134)) // Light Settings Page
         {
-
           tempL1OnHr = Light.On1Hr;
           tempL1OnMin = Light.On1Min;
           tempL1OffHr = Light.Dur1Min;
@@ -903,41 +868,33 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           myGLCD.printNumI(tempL2OnMin, 709, 207, 2, '0');
           myGLCD.printNumI(tempL2OffMin, 709, 342, 2, '0');
         }
-
         if ((x >= 175) && (x <= 240)) // Temp Settings Page
         {
           tempHeater = heater;
           tempFan = fan;
           screenTemp();
         }
-
         if ((x >= 270) && (x <= 362)) // Fogger Settings Page
         {
           screenFogger();
         }
       }
-
       if (( y >= 285) && (y < 411)) {
-
         if ((x >= 46) && (x <= 141)) // Misting Settings Page
         {
           screenMist();
         }
-
         if ((x >= 171) && (x <= 237)) // Fan Settings Page
         {
           screenFan();
         }
-
         if ((x >= 270) && (x <= 370)) // Clock Page
         {
           screenClock();
           SetDatePrint(56, 263);
           SetTimePrint(463, 263);
         }
-
       }
-
       if ((x >= 712) && (x <= 779) && (y >= 13) && (y <= 77)) // Screen Page
       {
         tempAD = AutoDim;
@@ -1036,7 +993,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         myGLCD.setFont(Ubuntubold);
         myGLCD.printNumI(tempL1OnHr, 211, 207, 2);
         myGLCD.printNumI(tempL1OffHr, 211, 342, 2);
-
       }
       if ((x >= 268) && (x < 318)) // ---> Minutes
       {
@@ -1089,7 +1045,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         myGLCD.setFont(Ubuntubold);
         myGLCD.printNumI(tempL2OnHr, 591, 207, 2);
         myGLCD.printNumI(tempL2OffHr, 591, 342, 2);
-
       }
       if ((x >= 650) && (x < 700)) // ---> Minutes
       {
@@ -1117,12 +1072,9 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         myGLCD.printNumI(tempL2OnMin, 709, 207, 2, '0');
         myGLCD.printNumI(tempL2OffMin, 709, 342, 2, '0');
       }
-
-
       break;
 
     case 3:    // Temp screen
-
       if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
       {
         TouchRepeatDelay = tmpTouchRepeatDelay;
@@ -1170,7 +1122,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       break;
 
     case 4:    // Fogger screen
-
       if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
       {
         screenHome();
@@ -1178,8 +1129,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       break;
 
     case 5:    // Misting screen
-
-
       if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
       {
         screenHome();
@@ -1246,7 +1195,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       break;
 
     case 6:    // Fan screen
-
       if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
       {
         screenHome();
@@ -1254,13 +1202,11 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       break;
 
     case 7:    // Clock screen
-
       if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
       {
         TouchRepeatDelay = tmpTouchRepeatDelay;
         screenHome();
       }
-
       if ((y >= 175) && (y < 250)) {  // 'Increase' row
         if ((x >= 55) && (x < 130)) { // 'Months'
           //Serial.println(F("Month+"));
@@ -1291,7 +1237,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         SetDatePrint(56, 263);
         SetTimePrint(463, 263);
       }
-
       if ((y >= 310) && (y < 385)) {  // 'Decrease' row
         if ((x >= 55) && (x < 130)) { // 'Months'
           //Serial.println(F("Month-"));
@@ -1317,7 +1262,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         SetDatePrint(56, 263);
         SetTimePrint(463, 263);
       }
-
       if ((y >= 410) && (y < 445)) { // 'Set' 'Cancel' Row
         if ((x >= 225) && (x < 345)) { //'Set'
 #if debug
@@ -1335,7 +1279,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           screenHome();
         }
       }
-
       break;
 
     case 8:    // Screen screen
@@ -1404,7 +1347,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           myGLCD.print("   ", 689, 340);
         }
       }
-
       if ((x >= 200 && x < 275)) { // 'Home' & 'Bright' Column
         if ((y >= 105 && y < 175)) { // 'Home +'
           if ( tempHD < 20) {
@@ -1431,11 +1373,8 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         myGLCD.printNumI(tempBL, 313, 340, 2);
       }
       break;
-
   }
-
 }
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////  ALL OTHER ROUTINES //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -1473,9 +1412,7 @@ void updateTimeDate()
 void printTime(time_t timeNow, int posx, int posy)
 {
   char tmpTime[8], charT[3];
-
   tmpTime[0] = '\0';
-
   if (hourFormat12(timeNow) >= 0 && hourFormat12(timeNow) < 10) { //add space
     strcat(tmpTime, " ");
     itoa(hourFormat12(timeNow), charT, 10);
