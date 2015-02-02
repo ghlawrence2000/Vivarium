@@ -6,8 +6,8 @@
 // All code is public domain, feel free to use, abuse, edit, and share                              //
 // Written for Arduino Mega 2560                                                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                       VERSION:  1.26895a   <===== !!!                            //
-//                                      initial version (updated a few times)                       //
+//                                     VERSION:  02/02/15 00:15GMT                                  //
+//                                        Development Version 10                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         CODE ORDER:                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,7 +135,7 @@ extern uint8_t Ubuntubold[];                                                    
 #define pwrTemp1     3   // binary  8                                                               //
 #define pwrLight2    4   // binary 16                                                               //
 #define pwrLight1    5   // binary 32                                                               //
-byte Relay=0xff, prevRelay=64;                                                                      //
+byte Relay = 0x3f, prevRelay = 0x40;                                                                //
 /*struct PWR                                                                                        //
 {                                                                                                   //
   byte pwrLight1;                                                                                   //
@@ -177,14 +177,14 @@ RTC_Millis rtc;                                                                 
 #endif                                                                                              //
 boolean updateTime = false; // keep track of when to udpate the clock                               //
 // days and month character strings for displaing at the top of the screen                          //
-const char *Day[] ={  
+const char *Day[] = {
   "", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };                                                                                                  //
-const char *Mon[] ={
+const char *Mon[] = {
   "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };                                                                                                  //
-tmElements_t tmpRTC, prevRTC, lastLoopRTC;                                                          //  
-unsigned long tempTime;                                                                             // 
+tmElements_t tmpRTC, prevRTC, lastLoopRTC;                                                          //
+unsigned long tempTime;                                                                             //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Various timings to keep track of                                //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ unsigned long TouchRepeatDelay = 500; // millis                                 
 unsigned long tmpTouchRepeatDelay = 500; //millis                                                   //
 unsigned long humidTime = 0; // 2 seconds minimum reading                                           //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                   Various screen settings                                        //    
+//                                   Various screen settings                                        //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 byte HomeDelay;  // (Return Home) Minutes 0-59                                                      //
 byte BackLight;  // (Bright) (not AutoDim) startup brightness to 100% 1-16                          //
@@ -206,11 +206,11 @@ byte dispScreen = 1;  // Currently displayed screen, screens shown below        
 // 1-home, 2-lights, , 3-temp, 4-fogger, 5-mister, 6-fan, 7-clock, 8-screen                         //
 byte mistScreen = 1;                                                                                //
 boolean BackLightTouch = true; // initial setting to allow the screen to stay on after boot         //
-//////////////////////////////////////////////////////////////////////////////////////////////////////  
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 //                               Scheduling and Alarm related variables                             //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct {
-  byte Enable;   // If Lights, not used                                                             // 
+  byte Enable;   // If Lights, not used                                                             //
   byte On1Hr;                                                                                       //
   byte On1Min;                                                                                      //
   byte Dur1Min;  // If Lights, then Lights1 Off1Hr                                                  //
@@ -225,13 +225,13 @@ SCHEDULE Light, Fog, Mist, Mist2, Fan;                                          
 float heater;    // = 35.9;                                                                         //
 float fan;       // = 87.9;                                                                         //
 float temp1 = 0.0, temp2 = 0.0, temp3 = 0.0, hum1 = 0.0;                                            //
-//byte FogOn1Hr, FogOn1Min, FogDur1Min, FogDur1Sec;                                                 // 
-//byte FogOn2Hr, FogOn2Min, FogDur2Min, FogDur2Sec;                                                 // 
+//byte FogOn1Hr, FogOn1Min, FogDur1Min, FogDur1Sec;                                                 //
+//byte FogOn2Hr, FogOn2Min, FogDur2Min, FogDur2Sec;                                                 //
 //byte FogDay;                                                                                      //
-//byte MistOn1Hr, MistOn1Min, MistDur1Min, MistDur1Sec;                                             // 
+//byte MistOn1Hr, MistOn1Min, MistDur1Min, MistDur1Sec;                                             //
 //byte MistOn2Hr, MistOn2Min, MistDur2Min, MistDur2Sec;                                             //
 //byte MistDay;                                                                                     //
-//byte FanOn1Hr, FanOn1Min, FanDur1Min, FanDur1Sec;                                                 // 
+//byte FanOn1Hr, FanOn1Min, FanDur1Min, FanDur1Sec;                                                 //
 //byte FanOn2Hr, FanOn2Min, FanDur2Min, FanDur2Sec;                                                 //
 //byte FanDay;                                                                                      //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -306,16 +306,16 @@ void setup()
   ///////////////////////////////////////////////////////////////////////////////////////////
 #if debug
   // locate DS18B20 temperature devices on the bus
-  Serial.print("Locating devices...");
-  Serial.print("Found ");
+  Serial.print(F("Locating Dallas 1820 devices... "));
+  Serial.print(F("Found "));
   Serial.print(sensors.getDeviceCount());
-  Serial.println(" devices.");
+  Serial.println(F("."));
 #endif
   ///////////////////////////////////////////////////////////////////////////////////////////
   //                                 Initiate the SD Card                                  //
   ///////////////////////////////////////////////////////////////////////////////////////////
 #if debug
-  Serial.println("Initialising SD card...");
+  Serial.println(F("Initialising SD card..."));
 #endif
   bool mysd = 0;
   // see if the card is present and can be initialized:
@@ -453,8 +453,6 @@ void loop()
   {
     myGLCD.setBrightness(BackLight);
   }
-
-
   if ((currentMillis - millisHome > (HomeDelay * 60000UL)) && dispScreen != 1) {
     millisHome = currentMillis;
     screenHome();
@@ -470,97 +468,133 @@ void loop()
         myGLCD.setBrightness(BackLight);
         BackLightTouch = true;
       }
-
       prevMillisTouch = currentMillis; // reset the touch timer
       millisDim = currentMillis; // reset screen dim timer
       millisHome = currentMillis; // reset return home timer
       processMyTouch();
     }
   }
-
-  // Get the time in seconds (since 1970)
   myCopyTime(&lastLoopRTC);
-  unsigned long rightNow = now();
-  float tmptemp1, tmptemp2, tmptemp3, tmphum;
-
+  unsigned long rightNow = now();  // Get the time in seconds (since 1970)
   if ((rightNow - humidTime) >= 2) {
+    float tmphum;
     humRead(tmphum);
     if (hum1 != tmphum) {
       hum1 = tmphum;
+#if debug
+      Serial.print(F("Internal humidity update: "));
+      Serial.println(hum1);
+#endif
+      if (dispScreen == 1)
+      {
+        char hum[6];
+        dtostrf(hum1, 4, 1, hum);
+        myGLCD.setColor(255, 77, 0);
+        myGLCD.setFont(Ubuntubold);
+        myGLCD.print(hum, 425, 405);
+#if debug
+        Serial.print(F("Screen (Home) humidity update: "));
+        Serial.println(hum1);
+#endif
+      }
     }
   }
   if ((rightNow - tempTime) >= 1) {
-    tempRead(tmptemp1, tmptemp2, tmptemp3);
-    if (temp1 != tmptemp1) {
-      temp1 = tmptemp1;
+    if (dispScreen == 1)
+    {
+      myGLCD.setColor(255, 77, 0);
+      myGLCD.setFont(arial_bold);
     }
-    if (temp2 != tmptemp2) {
+    if (dispScreen == 3)
+    {
+      myGLCD.setColor(255, 77, 0);
+      myGLCD.setFont(Ubuntubold);
+    }
+    char sensor[6] = "     ";
+    float tmptemp1, tmptemp2, tmptemp3;
+    tempRead(tmptemp1, tmptemp2, tmptemp3);
+    if (temp1 != tmptemp1)
+    {
+      temp1 = tmptemp1;
+#if debug
+      Serial.print(F("Internal temp1 update "));
+      Serial.println(temp1);
+#endif
+      if (dispScreen == 1)
+      {
+        dtostrf(temp1, 4, 1, sensor);
+        myGLCD.print(sensor, 424, 316);
+#if debug
+        Serial.print(F("Screen (Home) temp1 update "));
+        Serial.println(temp1);
+#endif
+      }
+      if (dispScreen == 3)
+      {
+        dtostrf(temp1, 4, 1, sensor);
+        myGLCD.print(sensor, 47, 325);
+#if debug
+        Serial.print(F("Screen (Temp) temp1 update "));
+        Serial.println(temp1);
+#endif
+      }
+    }
+    if (temp2 != tmptemp2)
+    {
       temp2 = tmptemp2;
+#if debug
+      Serial.print(F("Internal temp2 update "));
+      Serial.println(temp2);
+#endif
+      if (dispScreen == 1)
+      {
+        dtostrf(temp2, 4, 1, sensor);
+        myGLCD.print(sensor, 552, 316);
+#if debug
+        Serial.print(F("Screen (Home) temp2 update "));
+        Serial.println(temp2);
+#endif
+      }
+      if (dispScreen == 3);
+      {
+        dtostrf(temp2, 4, 1, sensor);
+        myGLCD.print(sensor, 197, 325);
+#if debug
+        Serial.print(F("Screen (Temp) temp2 update "));
+        Serial.println(temp2);
+#endif
+      }
     }
     if (temp3 != tmptemp3) {
       temp3 = tmptemp3;
+#if debug
+      Serial.print(F("Internal temp3 update"));
+      Serial.println(temp3);
+#endif
+      if (dispScreen == 1)
+      {
+        dtostrf(temp3, 4, 1, sensor);
+        myGLCD.print(sensor, 675, 316);
+#if debug
+        Serial.print(F("Screen (Home) temp3 update "));
+        Serial.println(temp3);
+#endif
+      }
+      if (dispScreen == 3)
+      {
+        dtostrf(temp3, 4, 1, sensor);
+        myGLCD.print(sensor, 353, 325);
+#if debug
+        Serial.print(F("Screen (Temp) temp3 update "));
+        Serial.println(temp3);
+#endif
+      }
     }
   }
 
-  if (dispScreen == 1)
-  {
-    myGLCD.setColor(255, 77, 0);
-    myGLCD.setFont(arial_bold);
-    char sensor[6] = "     ";
-    dtostrf(temp1, 4, 1, sensor);
-    myGLCD.print(sensor, 424, 316);
-    if (temp2 != 0.0)
-    {
-      dtostrf(temp2, 4, 1, sensor);
-      myGLCD.print(sensor, 552, 316);
-    }
-    if (temp3 != 0.0)
-    {
-      dtostrf(temp3, 4, 1, sensor);
-      myGLCD.print(sensor, 675, 316);
-    }
-    char hum[6];
-    dtostrf(hum1, 4, 1, hum);
-    myGLCD.setColor(255, 77, 0);
-    myGLCD.setFont(Ubuntubold);
-    myGLCD.print(hum, 425, 405);
-    procRelays(Relay);
-  
-  }
+  procRelays(Relay);
 
 
-  if (dispScreen == 3) {
-    myGLCD.setColor(255, 77, 0);
-    myGLCD.setFont(Ubuntubold);
-    char sensor[6] = "     ";
-    dtostrf(temp1, 4, 1, sensor);
-    myGLCD.print(sensor, 47, 325);
-    if (temp2 != 0.0)
-    {
-      dtostrf(temp2, 4, 1, sensor);
-      myGLCD.print(sensor, 197, 325);
-    }
-    if (temp3 != 0.0)
-    {
-      dtostrf(temp3, 4, 1, sensor);
-      myGLCD.print(sensor, 353, 325);
-    }
-  }
-  {
-    Serial.print("temp1");
-    Serial.print(" ");
-    Serial.print(temp1);
-    Serial.print(" temp2");
-    Serial.print(" ");
-    Serial.print(temp2);
-    Serial.print(" temp3");
-    Serial.print(" ");
-    Serial.print(temp3);
-    Serial.print(" tmphum");
-    Serial.print(" ");
-    Serial.println(hum1);
-  }
-  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -1133,6 +1167,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
 
     case 5:    // Misting screen
 
+
       if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
       {
         screenHome();
@@ -1535,7 +1570,7 @@ void processSyncMessage() {
       rtc.adjust(pctime); // Sync Arduino clock to the time received on the serial port
       setTime(pctime);
 #if debug
-      Serial.println("Time Set");
+      Serial.println(F("Time Set"));
 #endif
     }
   }
@@ -1567,15 +1602,15 @@ void tempRead(float &temp1a, float &temp2a, float &temp3a)
   temp1a = 0.0, temp2a = 0.0, temp3a = 0.0;
   if (numSensors >= 1)
   {
-    temp1a = sensors.getTempCByIndex(0);
+    temp1a = sensors.getTempFByIndex(0);
   }
   if (numSensors >= 2)
   {
-    temp2a = sensors.getTempCByIndex(1);
+    temp2a = sensors.getTempFByIndex(1);
   }
   if (numSensors >= 3)
   {
-    temp3a = sensors.getTempCByIndex(2);
+    temp3a = sensors.getTempFByIndex(2);
   }
   sensors.requestTemperatures();
   tempTime = now();
@@ -1603,10 +1638,10 @@ void humRead(float &hum1a)
 ////////////////////////////////////////////////////////////////////////////////////////////
 void firstRunSetup()
 {
-  // I'm going to save 29 into EEPROM bank 2000 as a check
-  if (EEPROM.read(2000) != 29)
+  // I'm going to save 47 into EEPROM bank 2000 as a check
+  if (EEPROM.read(2000) != 47)
   {
-    EEPROM.write(2000, 29); // write to EEPROM so this never runs again
+    EEPROM.write(2000, 47); // write to EEPROM so this never runs again
     // default screen settings
     EEPROM.write(1, 1); //         <- HomeDelay
     EEPROM.write(2, 16);//         <- BackLight
@@ -1651,7 +1686,7 @@ void firstRunSetup()
     EEPROM.write(47, 30); //       <- Mist2.On2Min
     EEPROM.write(48, 19); //       <- Mist2.Dur2Min
     EEPROM.write(49, 45); //       <- Mist2.Dur2Sec
-    EEPROM.write(50, 127); //      <- Mist2.OnDay  ( 0x7F = All week; 0/Sat/Fri/Thu/Wed/Tue/Mon/Sun ) 
+    EEPROM.write(50, 127); //      <- Mist2.OnDay  ( 0x7F = All week; 0/Sat/Fri/Thu/Wed/Tue/Mon/Sun )
     EEPROM.write(51, 0x00);//      <- Fan.Enable ( 0xF0 = 1 enable, 2 disable, 0xFF = 1 & 2 enable )
     EEPROM.write(52, 8); //        <- Fan.On1Hr
     EEPROM.write(53, 15); //       <- Fan.On1Min
@@ -1669,66 +1704,67 @@ void firstRunSetup()
 ////////////////////////////////////////////////////////////////////////////////////////////
 void relayOff(byte flag)
 {
-  Relay = Relay || (1<<flag);  
+  Relay = Relay || (1 << flag);
 }
 void relayOn(byte flag)
 {
-  Relay = Relay && (1<<flag);  
+  Relay = Relay && (1 << flag);
 }
 
 void procRelays(byte relay)
 {
-  if(relay !=prevRelay)
+  char relays[][10] = {"swon.raw" , "swoff.raw" };
+  if (relay != prevRelay)
   {
- if((relay & (1<<pwrLight1))==(1<<pwrLight1))   // Lights 1
- {
-   myFiles.load(555,418,22,22,"swoff.raw",16,0);
- }
- else
- {
-   myFiles.load(555,418,22,22,"swon.raw",16,0); 
- }
- if((relay & (1<<pwrLight2))==(1<<pwrLight2))    // Lights 2
- {
-   myFiles.load(580,418,22,22,"swoff.raw",16,0);
- }
- else
- {
-   myFiles.load(580,418,22,22,"swon.raw",16,0); 
- }
- if((relay & (1<<pwrTemp1))==(1<<pwrTemp1))    // Temp 1
- {  
-   myFiles.load(614,418,22,22,"swoff.raw",16,0);
- }
- else
- {
-   myFiles.load(614,418,22,22,"swon.raw",16,0); 
- }
- if((relay & (1<<pwrFogger1))==(1<<pwrFogger1))    // Fog 1
- {   
-   myFiles.load(655,418,22,22,"swoff.raw",16,0);
- }
- else
- {
-   myFiles.load(655,418,22,22,"swon.raw",16,0); 
- }
- if((relay & (1<<pwrMisting1))==(1<<pwrMisting1))   // Mist 1
- {
-   myFiles.load(694,418,22,22,"swoff.raw",16,0);
- }
- else
- {
-   myFiles.load(694,418,22,22,"swon.raw",16,0); 
- } 
- if((relay & (1<<pwrFan1))==(1<<pwrFan1))   // Fan 1
- {
-   myFiles.load(732,418,22,22,"swoff.raw",16,0);
- }
- else
- {
-   myFiles.load(732,418,22,22,"swon.raw",16,0); 
- } 
- prevRelay=relay;
+    if ((relay & (1 << pwrLight1)) == (1 << pwrLight1)) // Lights 1
+    {
+      myFiles.load(555, 418, 22, 22, relays[1], 16, 0);
+    }
+    else
+    {
+      myFiles.load(555, 418, 22, 22, relays[0], 16, 0);
+    }
+    if ((relay & (1 << pwrLight2)) == (1 << pwrLight2)) // Lights 2
+    {
+      myFiles.load(580, 418, 22, 22, relays[1], 16, 0);
+    }
+    else
+    {
+      myFiles.load(580, 418, 22, 22, relays[0], 16, 0);
+    }
+    if ((relay & (1 << pwrTemp1)) == (1 << pwrTemp1)) // Temp 1
+    {
+      myFiles.load(614, 418, 22, 22, relays[1], 16, 0);
+    }
+    else
+    {
+      myFiles.load(614, 418, 22, 22, relays[0], 16, 0);
+    }
+    if ((relay & (1 << pwrFogger1)) == (1 << pwrFogger1)) // Fog 1
+    {
+      myFiles.load(655, 418, 22, 22, relays[1], 16, 0);
+    }
+    else
+    {
+      myFiles.load(655, 418, 22, 22, relays[0], 16, 0);
+    }
+    if ((relay & (1 << pwrMisting1)) == (1 << pwrMisting1)) // Mist 1
+    {
+      myFiles.load(694, 418, 22, 22, relays[1], 16, 0);
+    }
+    else
+    {
+      myFiles.load(694, 418, 22, 22, relays[0], 16, 0);
+    }
+    if ((relay & (1 << pwrFan1)) == (1 << pwrFan1)) // Fan 1
+    {
+      myFiles.load(732, 418, 22, 22, relays[1], 16, 0);
+    }
+    else
+    {
+      myFiles.load(732, 418, 22, 22, relays[0], 16, 0);
+    }
+    prevRelay = relay;
   }
 }
 
