@@ -837,6 +837,8 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
   static volatile byte tempL1OffHr, tempL1OffMin;
   static volatile byte tempL2OnHr, tempL2OnMin;
   static volatile byte tempL2OffHr, tempL2OffMin;
+  static volatile byte tempM1e, tempM2e;
+
 
   myTouch.read();
   word x = myTouch.getX();
@@ -882,6 +884,8 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       if (( y >= 285) && (y < 411)) {
         if ((x >= 46) && (x <= 141)) // Misting Settings Page
         {
+          tempM1e = Mist.Enable;
+          tempM2e = Mist2.Enable;
           screenMist();
         }
         if ((x >= 171) && (x <= 237)) // Fan Settings Page
@@ -1133,61 +1137,175 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       {
         screenHome();
       }
+      if ((x >= 183) && (x < 236))
+      {
+        if ((y >= 209) && (y < 259))
+        {
+          switch (mistScreen) {
+            case 1:
+              if ((tempM1e & 0xF0) == 0x00) // Set Enable Mist 1
+              {
+                myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+                tempM1e = ((tempM1e & 0x0F) + 0xF0);
+              }
+              else
+              {
+                myGLCD.setColor(0, 0, 0);
+                myGLCD.fillRect(187, 216, 231, 251);
+                tempM1e = (tempM1e & 0x0F);
+              }
+              break;
+            case 2:
+              if ((tempM1e & 0x0F) == 0x00) // Set Enable Mist 2
+              {
+                myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+                tempM1e = ((tempM1e & 0xF0) + 0x0F);
+              }
+              else
+              {
+                myGLCD.setColor(0, 0, 0);
+                myGLCD.fillRect(187, 216, 231, 251);
+                tempM1e = (tempM1e & 0xF0);
+              }
+              break;
+            case 3:
+              if ((tempM2e & 0xF0) == 0x00) // Set Enable Mist 3
+              {
+                myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+                tempM2e = ((tempM2e & 0x0F) + 0xF0);
+              }
+              else
+              {
+                myGLCD.setColor(0, 0, 0);
+                myGLCD.fillRect(187, 216, 231, 251);
+                tempM2e = (tempM2e & 0x0F);
+              }
+              break;
+            case 4:
+              if ((tempM2e & 0x0F) == 0x00)  // Set Enable Mist 4
+              {
+                myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+                tempM2e = ((tempM2e & 0xF0) + 0x0F);
+              }
+              else
+              {
+                myGLCD.setColor(0, 0, 0);
+                myGLCD.fillRect(187, 216, 231, 251);
+                tempM2e = (tempM2e & 0xF0);
+              }
+              break;
+          }
+        }
+      }
+
+
       if ((x >= 51) && (x < 129))
       {
         if ((y >= 106) && (y < 184))
         {
           myFiles.load(51, 106, 78, 78, "blues.raw", 16, 0);
+          if ((tempM1e & 0xF0) != 0xF0) // is blue set?
+          {
+            myGLCD.setColor(0, 0, 0);
+            myGLCD.fillRect(187, 216, 231, 251);
+          }
+          else
+          {
+            myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+          }
+
           switch (mistScreen)
           {
             case 2:
               myFiles.load(51, 193, 78, 78, "yellow.raw", 16, 0);
+              break;
             case 3:
               myFiles.load(51, 281, 78, 78, "green.raw", 16, 0);
+              break;
             case 4:
-              myFiles.load(51, 368, 78, 78, "grey.raw", 16, 0);
+              myFiles.load(51, 281, 78, 78, "grey.raw", 16, 0);
+              break;
           }
           mistScreen = 1;
         }
         if ((y >= 193) && (y < 271))
         {
           myFiles.load(51, 193, 78, 78, "yellows.raw", 16, 0);
+          if ((tempM1e & 0x0F) != 0x0F) // is yellow set?
+          {
+            myGLCD.setColor(0, 0, 0);
+            myGLCD.fillRect(187, 216, 231, 251);
+          }
+          else
+          {
+            myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+          }
+
           switch (mistScreen)
           {
             case 1:
               myFiles.load(51, 106, 78, 78, "blue.raw", 16, 0);
+              break;
             case 3:
               myFiles.load(51, 281, 78, 78, "green.raw", 16, 0);
+              break;
             case 4:
               myFiles.load(51, 368, 78, 78, "grey.raw", 16, 0);
+              break;
           }
           mistScreen = 2;
         }
         if ((y >= 281) && (y < 359))
         {
           myFiles.load(51, 281, 78, 78, "greens.raw", 16, 0);
+          if ((tempM2e & 0xF0) != 0xF0) // is green set?
+          {
+            myGLCD.setColor(0, 0, 0);
+            myGLCD.fillRect(187, 216, 231, 251);
+          }
+          else
+          {
+            myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+          }
+
           switch (mistScreen)
           {
             case 1:
               myFiles.load(51, 106, 78, 78, "blue.raw", 16, 0);
+              break;
             case 2:
               myFiles.load(51, 193, 78, 78, "yellow.raw", 16, 0);
+              break;
             case 4:
               myFiles.load(51, 368, 78, 78, "grey.raw", 16, 0);
+              break;
           }
           mistScreen = 3;
         }
         if ((y >= 368) && (y < 446))
         {
           myFiles.load(51, 368, 78, 78, "greys.raw", 16, 0);
+          if ((tempM2e & 0x0F) != 0x0F) // is grey set?
+          {
+            myGLCD.setColor(0, 0, 0);
+            myGLCD.fillRect(187, 216, 231, 251);
+          }
+          else
+          {
+            myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+          }
+
           switch (mistScreen)
           {
             case 1:
               myFiles.load(51, 106, 78, 78, "blue.raw", 16, 0);
+              break;
             case 2:
               myFiles.load(51, 193, 78, 78, "yellow.raw", 16, 0);
+              break;
             case 3:
               myFiles.load(51, 281, 78, 78, "green.raw", 16, 0);
+              break;
           }
           mistScreen = 4;
         }
