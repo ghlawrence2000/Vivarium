@@ -1634,60 +1634,78 @@ void SetTimePrint(int x, int y)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void MistTimePrint(SCHEDULE mist, byte mscreen)
 {
+  char stH[3]="  ";
+  char stM[3]="  ";
+  char duM[3]="  ";
+  char duS[3]="  ";
   switch (mscreen) {
     case 1:
   if(!(mist.Enable & 0xf0))
   {
   Serial.println("Mistscreen 1 AND disbled");
+  //stH="  "; stM="  "; duM="  "; duS="  ";
   }
   else
   {
   Serial.println("Mistscreen 1 AND enabled");
+  itoa(mist.On1Hr,stH,10);
+  itoa(mist.On1Min,stM,10);
+  itoa(mist.Dur1Min,duM,10);
+  itoa(mist.Dur1Sec,duS,10);
   }
   break;
   case 2:
   if(!(mist.Enable & 0x0f))
   {
   Serial.println("Mistscreen 2 AND disabled");
+  //stH="  "; stM="  "; duM="  "; duS="  ";
   }
   else
   {
   Serial.println("Mistscreen 2 AND enabled");
+  itoa(mist.On2Hr,stH,10);
+  itoa(mist.On2Min,stM,10);
+  itoa(mist.Dur2Min,duM,10);
+  itoa(mist.Dur2Sec,duS,10);
   }    
   break;
   case 3:
   if(!(mist.Enable & 0xf0))
   {
   Serial.println("Mistscreen 3 AND disabled");
+  //stH="  "; stM="  "; duM="  "; duS="  ";
   }
   else
   {
   Serial.println("Mistscreen 3 AND enabled");
+  itoa(mist.On1Hr,stH,10);
+  itoa(mist.On1Min,stM,10);
+  itoa(mist.Dur1Min,duM,10);
+  itoa(mist.Dur1Sec,duS,10);
   }
   break;
   case 4:
   if(!(mist.Enable & 0x0f))
   {
   Serial.println("Mistscreen 4 AND disabled");
+  //stH="  "; stM="  "; duM="  "; duS="  ";
   }
   else
   {
    Serial.println("Mistscreen 4 AND enabled");
+  itoa(mist.On2Hr,stH,10);
+  itoa(mist.On2Min,stM,10);
+  itoa(mist.Dur2Min,duM,10);
+  itoa(mist.Dur2Sec,duS,10);
   }    
   break;
   }
-//  Serial.print("mist.Enable ");
-//  Serial.println(mist.Enable ,HEX);
-//  if((mist.Enable & 0xf0) == 0xf0)
-//  {
-//  Serial.print("Mistscreen print M%2 0xf0");
-//  Serial.println(mscreen %3);
-//  }
-//  if((mist.Enable & 0x0f) == 0x0f)
-//  {
-//  Serial.print("Mistscreen print M%2 0x0f");
-//  Serial.println(mscreen %3);
-//  }
+  myGLCD.setFont(Ubuntubold);
+  myGLCD.print(stH, 314, 216);
+  myGLCD.print(stM, 428, 216);
+  myGLCD.print(duM, 576, 216);
+  myGLCD.print(duS, 707, 216);
+
 //  char  chDate[25], tmpChar[5];
 //  strcat(chDate, "     ");
 //  chDate[0] = '\0';
