@@ -210,7 +210,7 @@ boolean BackLightTouch = true; // initial setting to allow the screen to stay on
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                               Scheduling and Alarm related variables                             //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-SCHEDULE Light, Fog, Mist, Mist2, Fan; 
+SCHEDULE Light, Fog, Mist, Mist2, Fan;
 SCHEDULE tempM1, tempM2; //
 float heater;    // = 35.9;                                                                         //
 float fan;       // = 87.9;                                                                         //
@@ -643,18 +643,7 @@ void screenHome()  // draw main home screen showing overview info
     tempRead(temp1, temp2, temp3);
   }
   unsigned long rightNow = now();
-//  if ((rightNow - tempTime) > 1) {
-//    tempRead(tmptemp1, tmptemp2, tmptemp3);
-//    if (temp1 != tmptemp1) {
-//      temp1 = tmptemp1;
-//    }
-//    if (temp2 != tmptemp2) {
-//      temp2 = tmptemp2;
-//    }
-//    if (temp3 != tmptemp3) {
-//      temp3 = tmptemp3;
-//    }
-//  }
+
   myGLCD.setColor(255, 77, 0);
   myGLCD.setFont(Ubuntubold);
   char sensor[6] = "     ";
@@ -827,7 +816,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
   static volatile byte tempL1OffHr, tempL1OffMin;
   static volatile byte tempL2OnHr, tempL2OnMin;
   static volatile byte tempL2OffHr, tempL2OffMin;
-
   myTouch.read();
   word x = myTouch.getX();
   word y = myTouch.getY();
@@ -875,13 +863,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           tempM1 = Mist;
           tempM2 = Mist2;
           screenMist();
-          if( mistScreen <3)
+          if ( mistScreen < 3)
           {
-          MistTimePrint(tempM1, mistScreen);
+            MistTimePrint(tempM1, mistScreen);
           }
           else
           {
-          MistTimePrint(tempM2, mistScreen);
+            MistTimePrint(tempM2, mistScreen);
           }
         }
         if ((x >= 171) && (x <= 237)) // Fan Settings Page
@@ -1131,7 +1119,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
     case 5:    // Misting screen
       if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
       {
-        Mist= tempM1;
+        Mist = tempM1;
         Mist2 = tempM2;
         screenHome();
       }
@@ -1199,8 +1187,481 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           }
         }
       }
+      if ((y >= 174) && (y < 222))
+      {
+        if ((x >= 254) && (x < 308))
+        { // Hr +1
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Hour +1"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Hour +1"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Hour +1"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Hour +1"));
+  
+  
+  
+}
 
-
+        }
+        if ((x >= 368) && (x < 422))
+        { // Min +1
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Min +1"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Min +1"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Min +1"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Min +1"));
+  
+  
+  
+}
+        }
+        if ((x >= 516) && (x < 570))
+        { // Min +1
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Min +1"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Min +1"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Min +1"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Min +1"));
+  
+  
+  
+}
+        }
+        if ((x >= 647) && (x < 701))
+        { // Sec +1
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Sec +1"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Sec +1"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Sec +1"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Sec +1"));
+  
+  
+  
+}
+        }
+      }
+      if ((y >= 242) && (y < 290))
+      {
+        if ((x >= 254) && (x < 308))
+        { // Hr -1
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Hour -1"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Hour -1"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Hour -1"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Hour -1"));
+  
+  
+  
+}
+        }
+        if ((x >= 368) && (x < 422))
+        { // Min -1
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Min -1"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Min -1"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Min -1"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Min -1"));
+  
+  
+  
+}
+        }
+        if ((x >= 516) && (x < 570))
+        { // Min -1
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Min -1"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Min -1"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Min -1"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Min -1"));
+  
+  
+  
+}
+        }
+        if ((x >= 647) && (x < 701))
+        { // Sec -1
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Sec -1"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Sec -1"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Sec -1"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Sec -1"));
+  
+  
+  
+}
+        }
+      }
+      if((y>=345) && (y<403))
+      {
+        if((x>=201) and (x<261))
+        {
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Sun"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Sun"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Sun"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Sun"));
+  
+  
+  
+}
+        }
+        if((x>=277) and (x<336))
+        {
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Mon"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Mon"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Mon"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Mon"));
+  
+  
+  
+}
+        }
+        if((x>=350) and (x<411))
+        {
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Tue"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Tue"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Tue"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Tue"));
+  
+  
+  
+}
+        }
+        if((x>=427) and (x<487))
+        {
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Wed"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Wed"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Wed"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Wed"));
+  
+  
+  
+}
+        }
+        if((x>=503) and (x<564))
+        {
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Thu"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Thu"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Thu"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Thu"));
+  
+  
+  
+}        }
+        if((x>=581) and (x<640))
+        {
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Fri"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Fri"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Fri"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Fri"));
+  
+  
+  
+}        }
+        if((x>=655) and (x<717))
+        {
+if(mistScreen==1)
+{
+          Serial.println(F("Mist 1 Sat"));
+  
+  
+  
+}
+if(mistScreen==2)
+{
+          Serial.println(F("Mist 2 Sat"));
+  
+  
+  
+}
+if(mistScreen==3)
+{
+          Serial.println(F("Mist 3 Sat"));
+  
+  
+  
+}
+if(mistScreen==4)
+{
+          Serial.println(F("Mist 4 Sat"));
+  
+  
+  
+}        }
+      }
+        
+      
+      
       if ((x >= 51) && (x < 129))
       {
         if ((y >= 106) && (y < 184))
@@ -1215,8 +1676,8 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           {
             myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
           }
-           MistTimePrint(tempM1, 1);
-           switch (mistScreen)
+          MistTimePrint(tempM1, 1);
+          switch (mistScreen)
           {
             case 2:
               myFiles.load(51, 193, 78, 78, "yellow.raw", 16, 0);
@@ -1241,7 +1702,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           else
           {
             myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
-           
+
           }
           MistTimePrint(tempM1, 2);
           switch (mistScreen)
@@ -1269,7 +1730,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           else
           {
             myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
-            
+
           }
           MistTimePrint(tempM2, 3);
           switch (mistScreen)
@@ -1297,7 +1758,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           else
           {
             myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
-            
+
           }
           MistTimePrint(tempM2, 4);
           switch (mistScreen)
@@ -1641,102 +2102,83 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
   byte duS;
   switch (mscreen) {
     case 1:
-  if(!(mist.Enable & 0xf0))
-  {
-  Serial.println("Mistscreen 1 AND disbled");
-  blankMistTime();
-  //stH="  "; stM="  "; duM="  "; duS="  ";
+      if (!(mist.Enable & 0xf0))
+      {
+        Serial.println("Mistscreen 1 AND disbled");
+        blankMistTime();
+        //stH="  "; stM="  "; duM="  "; duS="  ";
+      }
+      else
+      {
+        Serial.println("Mistscreen 1 AND enabled");
+        stH = mist.On1Hr;
+        stM = mist.On1Min;
+        duM = mist.Dur1Min;
+        duS = mist.Dur1Sec;
+        formatMistTime(stH, stM, duM, duS);
+      }
+      break;
+    case 2:
+      if (!(mist.Enable & 0x0f))
+      {
+        Serial.println("Mistscreen 2 AND disabled");
+        blankMistTime();
+        //stH="  "; stM="  "; duM="  "; duS="  ";
+      }
+      else
+      {
+        Serial.println("Mistscreen 2 AND enabled");
+        stH = mist.On2Hr;
+        stM = mist.On2Min;
+        duM = mist.Dur2Min;
+        duS = mist.Dur2Sec;
+        formatMistTime( stH, stM, duM, duS);
+      }
+      break;
+    case 3:
+      if (!(mist.Enable & 0xf0))
+      {
+        Serial.println("Mistscreen 3 AND disabled");
+        blankMistTime();
+        //stH="  "; stM="  "; duM="  "; duS="  ";
+      }
+      else
+      {
+        Serial.println("Mistscreen 3 AND enabled");
+        stH = mist.On1Hr;
+        stM = mist.On1Min;
+        duM = mist.Dur1Min;
+        duS = mist.Dur1Sec;
+        formatMistTime( stH, stM, duM, duS);
+      }
+      break;
+    case 4:
+      if (!(mist.Enable & 0x0f))
+      {
+        Serial.println("Mistscreen 4 AND disabled");
+        blankMistTime();
+        //stH="  "; stM="  "; duM="  "; duS="  ";
+      }
+      else
+      {
+        Serial.println("Mistscreen 4 AND enabled");
+        stH = mist.On2Hr;
+        stM = mist.On2Min;
+        duM = mist.Dur2Min;
+        duS = mist.Dur2Sec;
+        formatMistTime( stH, stM, duM, duS);
+      }
+      break;
   }
-  else
-  {
-  Serial.println("Mistscreen 1 AND enabled");
-  stH=mist.On1Hr;
-  stM=mist.On1Min;
-  duM=mist.Dur1Min;
-  duS=mist.Dur1Sec;
-  formatMistTime(stH, stM, duM, duS);
-  }
-  break;
-  case 2:
-  if(!(mist.Enable & 0x0f))
-  {
-  Serial.println("Mistscreen 2 AND disabled");
-  blankMistTime();
-  //stH="  "; stM="  "; duM="  "; duS="  ";
-  }
-  else
-  {
-  Serial.println("Mistscreen 2 AND enabled");
-  stH=mist.On2Hr;
-  stM=mist.On2Min;
-  duM=mist.Dur2Min;
-  duS=mist.Dur2Sec;
-  formatMistTime( stH, stM, duM, duS);
-  }    
-  break;
-  case 3:
-  if(!(mist.Enable & 0xf0))
-  {
-  Serial.println("Mistscreen 3 AND disabled");
-  blankMistTime();
-  //stH="  "; stM="  "; duM="  "; duS="  ";
-  }
-  else
-  {
-  Serial.println("Mistscreen 3 AND enabled");
-  stH=mist.On1Hr;
-  stM=mist.On1Min;
-  duM=mist.Dur1Min;
-  duS=mist.Dur1Sec;
-  formatMistTime( stH, stM, duM, duS); 
-  }
-  break;
-  case 4:
-  if(!(mist.Enable & 0x0f))
-  {
-  Serial.println("Mistscreen 4 AND disabled");
-  blankMistTime();
-  //stH="  "; stM="  "; duM="  "; duS="  ";
-  }
-  else
-  {
-   Serial.println("Mistscreen 4 AND enabled");
-  stH=mist.On2Hr;
-  stM=mist.On2Min;
-  duM=mist.Dur2Min;
-  duS=mist.Dur2Sec;
-  formatMistTime( stH, stM, duM, duS);
-  }    
-  break;
-  }
-//  char  chDate[25], tmpChar[5];
-//  strcat(chDate, "     ");
-//  chDate[0] = '\0';
-//  if (tmpRTC.Hour < 10) {
-//    strcat(chDate, " ");
-//  }
-//  itoa(tmpRTC.Hour, tmpChar, 10);
-//  strcat(chDate, tmpChar);
-//  strcat(chDate, " : ");
-//  if (tmpRTC.Minute < 10) {
-//    strcat(chDate, "0");
-//  }
-//  itoa(tmpRTC.Minute, tmpChar, 10);
-//  strcat(chDate, tmpChar);
-//  strcat(chDate, " .00");
-//  myGLCD.setFont(Ubuntubold);
-//  myGLCD.print(chDate, x, y);
 }
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void formatMistTime(byte Hr, byte Min, byte dMin, byte dSec)
 {
   myGLCD.setFont(Ubuntubold);
   myGLCD.printNumI(Hr, 314, 216, 2, ' ');
   myGLCD.printNumI(Min, 428, 216, 2, '0');
-  myGLCD.printNumI(dMin, 576, 216, 2 ,' ');
-  myGLCD.printNumI(dSec, 707, 216, 2,'0');
+  myGLCD.printNumI(dMin, 576, 216, 2 , ' ');
+  myGLCD.printNumI(dSec, 707, 216, 2, '0');
 }
 void blankMistTime()
 {
@@ -1746,7 +2188,7 @@ void blankMistTime()
   myGLCD.print("  ", 576, 216);
   myGLCD.print("  ", 707, 216);
 }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
 #if DS1307 == 0
 void processSyncMessage() {
   unsigned long pctime;
@@ -1790,17 +2232,17 @@ void tempRead(float &temp1a, float &temp2a, float &temp3a)
   if (numSensors >= 1)
   {
     temp1a = sensors.getTempFByIndex(0);
-    if(temp1a==185.0) temp1a=0.0;
+    if (temp1a == 185.0) temp1a = 0.0;
   }
   if (numSensors >= 2)
   {
     temp2a = sensors.getTempFByIndex(1);
-    if(temp2a==185.0) temp2a=0.0;
+    if (temp2a == 185.0) temp2a = 0.0;
   }
   if (numSensors >= 3)
   {
     temp3a = sensors.getTempFByIndex(2);
-    if(temp3a==185.0) temp3a=0.0;
+    if (temp3a == 185.0) temp3a = 0.0;
   }
   sensors.requestTemperatures();
   tempTime = now();
