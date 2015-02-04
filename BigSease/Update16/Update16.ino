@@ -1122,8 +1122,106 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
     case 5:    // Misting screen
       if ((x >= 363) && (x < 445) && (y >= 422) && (y < 480)) // Return Home button
       {
-        Mist = tempM1;
-        Mist2 = tempM2;
+        if (Mist.Enable != tempM1.Enable)
+        {
+          Mist.Enable = tempM1.Enable;
+          EEPROM.write(31, Mist.Enable);
+        }
+        if (Mist.On1Hr != tempM1.On1Hr)
+        {
+          Mist.On1Hr = tempM1.On1Hr;
+          EEPROM.write(32, Mist.On1Hr);
+        }
+        if (Mist.On1Min != tempM1.On1Min)
+        {
+          Mist.On1Min = tempM1.On1Min;
+          EEPROM.write(33, Mist.On1Min);
+        }
+        if (Mist.Dur1Min != tempM1.Dur1Min)
+        {
+          Mist.Dur1Min = tempM1.Dur1Min;
+          EEPROM.write(34, Mist.Dur1Min);
+        }
+        if (Mist.Dur1Sec != tempM1.Dur1Sec)
+        {
+          Mist.Dur1Sec = tempM1.Dur1Sec;
+          EEPROM.write(35, Mist.Dur1Sec);
+        }
+        if (Mist.On2Hr != tempM1.On2Hr)
+        {
+          Mist.On2Hr = tempM1.On2Hr;
+          EEPROM.write(36, Mist.On2Hr);
+        }
+        if (Mist.On2Min != tempM1.On2Min)
+        {
+          Mist.On2Min = tempM1.On2Min;
+          EEPROM.write(37, Mist.On2Min);
+        }
+        if (Mist.Dur2Min != tempM1.Dur2Min)
+        {
+          Mist.Dur2Min = tempM1.Dur2Min;
+          EEPROM.write(38, Mist.Dur2Min);
+        }
+        if (Mist.Dur2Sec != tempM1.Dur2Sec)
+        {
+          Mist.Dur2Sec = tempM1.Dur2Sec;
+          EEPROM.write(39, Mist.Dur2Sec);
+        }
+        if (Mist.OnDay != tempM1.OnDay)
+        {
+          Mist.OnDay = tempM1.OnDay;
+          EEPROM.write(40, Mist.OnDay);
+        }
+        if (Mist2.Enable != tempM2.Enable)
+        {
+          Mist2.Enable = tempM2.Enable;
+          EEPROM.write(41, Mist2.Enable);
+        }
+        if (Mist2.On1Hr != tempM2.On1Hr)
+        {
+          Mist2.On1Hr = tempM2.On1Hr;
+          EEPROM.write(42, Mist2.On1Hr);
+        }
+        if (Mist2.On1Min != tempM2.On1Min)
+        {
+          Mist2.On1Min = tempM2.On1Min;
+          EEPROM.write(43, Mist2.On1Min);
+        }
+        if (Mist2.Dur1Min != tempM2.Dur1Min)
+        {
+          Mist2.Dur1Min = tempM2.Dur1Min;
+          EEPROM.write(44, Mist2.Dur1Min);
+        }
+        if (Mist2.Dur1Sec != tempM2.Dur1Sec)
+        {
+          Mist2.Dur1Sec = tempM2.Dur1Sec;
+          EEPROM.write(45, Mist2.Dur1Sec);
+        }
+        if (Mist2.On2Hr != tempM2.On2Hr)
+        {
+          Mist2.On2Hr = tempM2.On2Hr;
+          EEPROM.write(46, Mist2.On2Hr);
+        }
+        if (Mist2.On2Min != tempM2.On2Min)
+        {
+          Mist2.On2Min = tempM2.On2Min;
+          EEPROM.write(47, Mist2.On2Min);
+        }
+        if (Mist2.Dur2Min != tempM2.Dur2Min)
+        {
+          Mist2.Dur2Min = tempM2.Dur2Min;
+          EEPROM.write(48, Mist2.Dur2Min);
+        }
+        if (Mist2.Dur2Sec != tempM2.Dur2Sec)
+        {
+          Mist2.Dur2Sec = tempM2.Dur2Sec;
+          EEPROM.write(49, Mist2.Dur2Sec);
+        }
+        if (Mist2.OnDay != tempM2.OnDay)
+        {
+          Mist2.OnDay = tempM2.OnDay;
+          EEPROM.write(50, Mist2.OnDay);
+        }
         screenHome();
       }
       if ((x >= 183) && (x < 236))
