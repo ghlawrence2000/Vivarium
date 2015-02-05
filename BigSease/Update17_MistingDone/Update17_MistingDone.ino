@@ -1255,7 +1255,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         {
           switch (mistScreen) {
             case 1:
-              if ((tempM1.Enable & 0xF0) == 0x00) // Set Enable Mist 1
+              if (!(tempM1.Enable & 0xF0)) // Set Enable Mist 1
               {
                 tempM1.Enable = ((tempM1.Enable & 0x0F) + 0xF0);
               }
@@ -1266,7 +1266,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               MistTimePrint(tempM1, 1);
               break;
             case 2:
-              if ((tempM1.Enable & 0x0F) == 0x00) // Set Enable Mist 2
+              if (!(tempM1.Enable & 0x0F)) // Set Enable Mist 2
               {
                 tempM1.Enable = ((tempM1.Enable & 0xF0) + 0x0F);
               }
@@ -1277,7 +1277,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               MistTimePrint(tempM1, 2);
               break;
             case 3:
-              if ((tempM2.Enable & 0xF0) == 0x00) // Set Enable Mist 3
+              if (!(tempM2.Enable & 0xF0)) // Set Enable Mist 3
               {
                 tempM2.Enable = ((tempM2.Enable & 0x0F) + 0xF0);
               }
@@ -1288,7 +1288,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               MistTimePrint(tempM2, 3);
               break;
             case 4:
-              if ((tempM2.Enable & 0x0F) == 0x00)  // Set Enable Mist 4
+              if (!(tempM2.Enable & 0x0F))  // Set Enable Mist 4
               {
                 tempM2.Enable = ((tempM2.Enable & 0xF0) + 0x0F);
               }
@@ -1835,7 +1835,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               else
               {
                 Serial.println(F("Mist 3 Tue Off"));
-                tempM2.OnDay = (tempM2.OnDay | (1 << Tue)); 
+                tempM2.OnDay = (tempM2.OnDay | (1 << Tue));
                 //dowFrog(tempM2.OnDay);
               }
             }
@@ -2137,34 +2137,34 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               {
                 Serial.println(F("Mist 4 Sat Off"));
                 tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Sat));
-                //dowFrog(tempM2.OnDay2);               
+                //dowFrog(tempM2.OnDay2);
               }
             }
           }
         }
         // end of day of week row, so update frogs ONCE
-        switch(mistScreen)
+        switch (mistScreen)
         {
           case 1:
-          dowBlank(tempM1.OnDay);
-          if ((tempM1.Enable & 0xf0))
-          dowFrog(tempM1.OnDay);
-          break;
+            dowBlank(tempM1.OnDay);
+            if ((tempM1.Enable & 0xf0))
+              dowFrog(tempM1.OnDay);
+            break;
           case 2:
-          dowBlank(tempM1.OnDay2);
-          if ((tempM1.Enable & 0x0f))
-          dowFrog(tempM1.OnDay2);
-          break;
+            dowBlank(tempM1.OnDay2);
+            if ((tempM1.Enable & 0x0f))
+              dowFrog(tempM1.OnDay2);
+            break;
           case 3:
-          dowBlank(tempM2.OnDay);
-          if ((tempM2.Enable & 0xf0))
-          dowFrog(tempM2.OnDay);
-          break;
+            dowBlank(tempM2.OnDay);
+            if ((tempM2.Enable & 0xf0))
+              dowFrog(tempM2.OnDay);
+            break;
           case 4:
-          dowBlank(tempM2.OnDay2);
-          if ((tempM2.Enable & 0x0f))
-          dowFrog(tempM2.OnDay2);
-          break;
+            dowBlank(tempM2.OnDay2);
+            if ((tempM2.Enable & 0x0f))
+              dowFrog(tempM2.OnDay2);
+            break;
         }
       }
 
@@ -2283,6 +2283,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           mistScreen = 4;
         }
       }
+
       break;
 
     case 6:    // Fan screen
@@ -2700,6 +2701,7 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void formatMistTime(byte Hr, byte Min, byte dMin, byte dSec)
 {
+  myGLCD.setColor(255, 77, 0);
   myGLCD.setFont(Ubuntubold);
   myGLCD.printNumI(Hr, 314, 216, 2, ' ');
   myGLCD.printNumI(Min, 428, 216, 2, '0');
@@ -2716,15 +2718,15 @@ void blankMistTime()
 }
 void dowFrog(byte dow)
 {
-//  char fname[] = "Frog.raw";
-if (dow & 0x01) myGLCD.drawBitmap (209, 357, 45, 36, frog);
-if (dow & 0x02) myGLCD.drawBitmap (285, 357, 45, 36, frog);
-if (dow & 0x04) myGLCD.drawBitmap (358, 357, 45, 36, frog);
-if (dow & 0x08) myGLCD.drawBitmap (434, 357, 45, 36, frog);
-if (dow & 0x10) myGLCD.drawBitmap (511, 357, 45, 36, frog);
-if (dow & 0x20) myGLCD.drawBitmap (589, 357, 45, 36, frog);
-if (dow & 0x40) myGLCD.drawBitmap (663, 357, 45, 36, frog);
-// myFiles.load(209, 357, 45, 36, fname , 16, 0);
+  //  char fname[] = "Frog.raw";
+  if (dow & 0x01) myGLCD.drawBitmap (209, 357, 45, 36, frog);
+  if (dow & 0x02) myGLCD.drawBitmap (285, 357, 45, 36, frog);
+  if (dow & 0x04) myGLCD.drawBitmap (358, 357, 45, 36, frog);
+  if (dow & 0x08) myGLCD.drawBitmap (434, 357, 45, 36, frog);
+  if (dow & 0x10) myGLCD.drawBitmap (511, 357, 45, 36, frog);
+  if (dow & 0x20) myGLCD.drawBitmap (589, 357, 45, 36, frog);
+  if (dow & 0x40) myGLCD.drawBitmap (663, 357, 45, 36, frog);
+  // myFiles.load(209, 357, 45, 36, fname , 16, 0);
 }
 void dowBlank(byte dow)
 {
