@@ -56,36 +56,40 @@
 //    28 //  Fog    : Fog.Dur2Min            //                                                     //
 //    29 //  Fog    : Fog.Dur2Sec            //                                                     //
 //    30 //  Fog    : Fog.OnDay              //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x3c=Tue-Fri       //
-//    31 //  Mist1&2: Mist.Enable            // ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )     //
-//    32 //  Mist1  : Mist.On1Hr             //                                                     //
-//    33 //  Mist1  : Mist.On1Min            //                                                     //
-//    34 //  Mist1  : Mist.Dur1Min           //                                                     //
-//    35 //  Mist1  : Mist.Dur1Sec           //                                                     //
-//    36 //  Mist2  : Mist.On2Hr             //                                                     //
-//    37 //  Mist2  : Mist.On2Min            //                                                     //
-//    38 //  Mist2  : Mist.Dur2Min           //                                                     //
-//    39 //  Mist2  : Mist.Dur2Sec           //                                                     //
-//    40 //  Mist2  : Mist.OnDay             //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x70 =Thu-Sat      //
-//    41 //  Mist3&4: Mist2.Enable           // ( F0 = 3 enable, 4 disable, FF = 3 & 4 enable )     //
-//    42 //  Mist3  : Mist2.On3Hr            //                                                     //
-//    43 //  Mist3  : Mist2.On3Min           //                                                     //
-//    44 //  Mist3  : Mist2.Dur3Min          //                                                     //
-//    45 //  Mist3  : Mist2.Dur3Sec          //                                                     //
-//    46 //  Mist4  : Mist2.On3Hr            //                                                     //
-//    47 //  Mist4  : Mist2.On3Min           //                                                     //
-//    48 //  Mist4  : Mist2.Dur3Min          //                                                     //
-//    49 //  Mist4  : Mist2.Dur3Sec          //                                                     //
-//    50 //  Mist4  : Mist2.OnDay            //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x0F =Sun-Wed      //
-//    51 //  Fan    : Fan.Enable             // ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )     //
-//    52 //  Fan    : Fan.On1Hr              //                                                     //
-//    53 //  Fan    : Fan.On1Min             //                                                     //
-//    54 //  Fan    : Fan.Dur1Min            //                                                     //
-//    55 //  Fan    : Fan.Dur1Sec            //                                                     //
-//    56 //  Fan    : Fan.On2Hr              //                                                     //
-//    57 //  Fan    : Fan.On2Min             //                                                     //
-//    58 //  Fan    : Fan.Dur2Min            //                                                     //
-//    59 //  Fan    : Fan.Dur2Sec            //                                                     //
-//    60 //  Fan    : Fan.OnDay              //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x0F =Sun-Wed      //
+//    31 //  Fog    : Fog.OnDay2             //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x3c=Tue-Fri       //
+//    32 //  Mist1&2: Mist.Enable            // ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )     //
+//    33 //  Mist1  : Mist.On1Hr             //                                                     //
+//    34 //  Mist1  : Mist.On1Min            //                                                     //
+//    35 //  Mist1  : Mist.Dur1Min           //                                                     //
+//    36 //  Mist1  : Mist.Dur1Sec           //                                                     //
+//    37 //  Mist2  : Mist.On2Hr             //                                                     //
+//    38 //  Mist2  : Mist.On2Min            //                                                     //
+//    39 //  Mist2  : Mist.Dur2Min           //                                                     //
+//    40 //  Mist2  : Mist.Dur2Sec           //                                                     //
+//    41 //  Mist2  : Mist.OnDay             //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x70 =Thu-Sat      //
+//    42 //  Mist2  : Mist.OnDay             //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x70 =Thu-Sat      //
+//    43 //  Mist3&4: Mist2.Enable           // ( F0 = 3 enable, 4 disable, FF = 3 & 4 enable )     //
+//    44 //  Mist3  : Mist2.On3Hr            //                                                     //
+//    45 //  Mist3  : Mist2.On3Min           //                                                     //
+//    46 //  Mist3  : Mist2.Dur3Min          //                                                     //
+//    47 //  Mist3  : Mist2.Dur3Sec          //                                                     //
+//    48 //  Mist4  : Mist2.On3Hr            //                                                     //
+//    49 //  Mist4  : Mist2.On3Min           //                                                     //
+//    50 //  Mist4  : Mist2.Dur3Min          //                                                     //
+//    51 //  Mist4  : Mist2.Dur3Sec          //                                                     //
+//    52 //  Mist4  : Mist2.OnDay            //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x0F =Sun-Wed      //
+//    53 //  Mist4  : Mist2.OnDay2           //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x0F =Sun-Wed      //
+//    54 //  Fan    : Fan.Enable             // ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )     //
+//    55 //  Fan    : Fan.On1Hr              //                                                     //
+//    56 //  Fan    : Fan.On1Min             //                                                     //
+//    57 //  Fan    : Fan.Dur1Min            //                                                     //
+//    58 //  Fan    : Fan.Dur1Sec            //                                                     //
+//    59 //  Fan    : Fan.On2Hr              //                                                     //
+//    60 //  Fan    : Fan.On2Min             //                                                     //
+//    61 //  Fan    : Fan.Dur2Min            //                                                     //
+//    62 //  Fan    : Fan.Dur2Sec            //                                                     //
+//    63 //  Fan    : Fan.OnDay              //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x0F =Sun-Wed      //
+//    64 //  Fan    : Fan.OnDay2             //  0/Sat/Fri/Thu/Wed/Tue/Mon/Sun   0x0F =Sun-Wed      //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Decare Libraries                                                //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,6 +106,7 @@
 #include <DallasTemperature.h>     // library for the Temp sensor itself                            //
 #include <dht.h>                   // Rob Tillaart's improved humidity library                      //
 #include "includes.h"              // Workaround for quirk in Arduino IDE                           //
+#include <avr/pgmspace.h>
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                   Compile time options                                           //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,6 +124,7 @@ extern uint8_t SmallFont[];                                                     
 extern uint8_t Sinclair_S[];                                                                        //
 extern uint8_t arial_bold[];                                                                        //
 extern uint8_t Ubuntubold[];                                                                        //
+extern unsigned int frog[0x654];
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Define pins                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1135,102 +1141,112 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         if (Mist.Enable != tempM1.Enable)
         {
           Mist.Enable = tempM1.Enable;
-          EEPROM.write(31, Mist.Enable);
+          EEPROM.write(32, Mist.Enable);
         }
         if (Mist.On1Hr != tempM1.On1Hr)
         {
           Mist.On1Hr = tempM1.On1Hr;
-          EEPROM.write(32, Mist.On1Hr);
+          EEPROM.write(33, Mist.On1Hr);
         }
         if (Mist.On1Min != tempM1.On1Min)
         {
           Mist.On1Min = tempM1.On1Min;
-          EEPROM.write(33, Mist.On1Min);
+          EEPROM.write(34, Mist.On1Min);
         }
         if (Mist.Dur1Min != tempM1.Dur1Min)
         {
           Mist.Dur1Min = tempM1.Dur1Min;
-          EEPROM.write(34, Mist.Dur1Min);
+          EEPROM.write(35, Mist.Dur1Min);
         }
         if (Mist.Dur1Sec != tempM1.Dur1Sec)
         {
           Mist.Dur1Sec = tempM1.Dur1Sec;
-          EEPROM.write(35, Mist.Dur1Sec);
+          EEPROM.write(36, Mist.Dur1Sec);
         }
         if (Mist.On2Hr != tempM1.On2Hr)
         {
           Mist.On2Hr = tempM1.On2Hr;
-          EEPROM.write(36, Mist.On2Hr);
+          EEPROM.write(37, Mist.On2Hr);
         }
         if (Mist.On2Min != tempM1.On2Min)
         {
           Mist.On2Min = tempM1.On2Min;
-          EEPROM.write(37, Mist.On2Min);
+          EEPROM.write(38, Mist.On2Min);
         }
         if (Mist.Dur2Min != tempM1.Dur2Min)
         {
           Mist.Dur2Min = tempM1.Dur2Min;
-          EEPROM.write(38, Mist.Dur2Min);
+          EEPROM.write(39, Mist.Dur2Min);
         }
         if (Mist.Dur2Sec != tempM1.Dur2Sec)
         {
           Mist.Dur2Sec = tempM1.Dur2Sec;
-          EEPROM.write(39, Mist.Dur2Sec);
+          EEPROM.write(40, Mist.Dur2Sec);
         }
         if (Mist.OnDay != tempM1.OnDay)
         {
           Mist.OnDay = tempM1.OnDay;
-          EEPROM.write(40, Mist.OnDay);
+          EEPROM.write(41, Mist.OnDay);
+        }
+        if (Mist.OnDay2 != tempM1.OnDay2)
+        {
+          Mist.OnDay2 = tempM1.OnDay2;
+          EEPROM.write(42, Mist.OnDay2);
         }
         if (Mist2.Enable != tempM2.Enable)
         {
           Mist2.Enable = tempM2.Enable;
-          EEPROM.write(41, Mist2.Enable);
+          EEPROM.write(43, Mist2.Enable);
         }
         if (Mist2.On1Hr != tempM2.On1Hr)
         {
           Mist2.On1Hr = tempM2.On1Hr;
-          EEPROM.write(42, Mist2.On1Hr);
+          EEPROM.write(44, Mist2.On1Hr);
         }
         if (Mist2.On1Min != tempM2.On1Min)
         {
           Mist2.On1Min = tempM2.On1Min;
-          EEPROM.write(43, Mist2.On1Min);
+          EEPROM.write(45, Mist2.On1Min);
         }
         if (Mist2.Dur1Min != tempM2.Dur1Min)
         {
           Mist2.Dur1Min = tempM2.Dur1Min;
-          EEPROM.write(44, Mist2.Dur1Min);
+          EEPROM.write(46, Mist2.Dur1Min);
         }
         if (Mist2.Dur1Sec != tempM2.Dur1Sec)
         {
           Mist2.Dur1Sec = tempM2.Dur1Sec;
-          EEPROM.write(45, Mist2.Dur1Sec);
+          EEPROM.write(47, Mist2.Dur1Sec);
         }
         if (Mist2.On2Hr != tempM2.On2Hr)
         {
           Mist2.On2Hr = tempM2.On2Hr;
-          EEPROM.write(46, Mist2.On2Hr);
+          EEPROM.write(48, Mist2.On2Hr);
         }
         if (Mist2.On2Min != tempM2.On2Min)
         {
           Mist2.On2Min = tempM2.On2Min;
-          EEPROM.write(47, Mist2.On2Min);
+          EEPROM.write(49, Mist2.On2Min);
         }
         if (Mist2.Dur2Min != tempM2.Dur2Min)
         {
           Mist2.Dur2Min = tempM2.Dur2Min;
-          EEPROM.write(48, Mist2.Dur2Min);
+          EEPROM.write(50, Mist2.Dur2Min);
         }
         if (Mist2.Dur2Sec != tempM2.Dur2Sec)
         {
           Mist2.Dur2Sec = tempM2.Dur2Sec;
-          EEPROM.write(49, Mist2.Dur2Sec);
+          EEPROM.write(51, Mist2.Dur2Sec);
         }
         if (Mist2.OnDay != tempM2.OnDay)
         {
           Mist2.OnDay = tempM2.OnDay;
-          EEPROM.write(50, Mist2.OnDay);
+          EEPROM.write(52, Mist2.OnDay);
+        }
+        if (Mist2.OnDay2 != tempM2.OnDay2)
+        {
+          Mist2.OnDay2 = tempM2.OnDay2;
+          EEPROM.write(53, Mist2.OnDay2);
         }
         screenHome();
       }
@@ -1636,17 +1652,16 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           {
             if ((tempM1.Enable & 0xF0) == 0xF0) {
               //    Serial.println(F("Mist 1 Sun"));
-
               if ((tempM1.OnDay & (1 << Sun)) == (1 << Sun)) {
                 Serial.println(F("Mist 1 Sun On"));
                 tempM1.OnDay = (tempM1.OnDay & ~ (1 << Sun));
-                dowFrog(Sun);
+                //dowBlank(tempM1.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 1 Sun Off"));
                 tempM1.OnDay = (tempM1.OnDay | (1 << Sun));
-                dowBlank(Sun);
+                //dowFrog(tempM1.OnDay);
               }
             }
           }
@@ -1657,13 +1672,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay2 & (1 << Sun)) == (1 << Sun)) {
                 Serial.println(F("Mist 2 Sun On"));
                 tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Sun));
-                dowFrog(Sun);
+                //dowBlank(tempM1.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 2 Sun Off"));
                 tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Sun));
-                dowBlank(Sun);
+                //dowFrog(tempM1.OnDay2);
               }
             }
           }
@@ -1674,31 +1689,30 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay & (1 << Sun)) == (1 << Sun)) {
                 Serial.println(F("Mist 3 Sun On"));
                 tempM2.OnDay = (tempM2.OnDay & ~ (1 << Sun));
-                dowFrog(Sun);
+                //dowBlank(tempM2.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 3 Sun Off"));
                 tempM2.OnDay = (tempM2.OnDay | (1 << Sun));
-                dowBlank(Sun);
+                //dowFrog(tempM2.OnDay);
               }
             }
           }
           if (mistScreen == 4)
           {
             if ((tempM2.Enable & 0x0F) == 0x0F) {
-
               //    Serial.println(F("Mist 4 Sun"));
               if ((tempM2.OnDay2 & (1 << Sun)) == (1 << Sun)) {
                 Serial.println(F("Mist 4 Sun On"));
                 tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Sun));
-                dowFrog(Sun);
+                //dowBlank(tempM2.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 4 Sun Off"));
                 tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Sun));
-                dowBlank(Sun);
+                //dowFrog(tempM2.OnDay2);
               }
             }
           }
@@ -1712,13 +1726,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay & (1 << Mon)) == (1 << Mon)) {
                 Serial.println(F("Mist 1 Mon On"));
                 tempM1.OnDay = (tempM1.OnDay & ~ (1 << Mon));
-                dowFrog(Mon);
+                //dowBlank(tempM1.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 1 Mon Off"));
                 tempM1.OnDay = (tempM1.OnDay | (1 << Mon));
-                dowBlank(Mon);
+                //dowFrog(tempM1.OnDay);
               }
             }
           }
@@ -1729,13 +1743,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay2 & (1 << Mon)) == (1 << Mon)) {
                 Serial.println(F("Mist 2 Mon On"));
                 tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Mon));
-                dowFrog(Mon);
+                //dowBlank(tempM1.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 2 Mon Off"));
                 tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Mon));
-                dowBlank(Mon);
+                //dowFrog(tempM1.OnDay2);
               }
             }
           }
@@ -1746,13 +1760,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay & (1 << Mon)) == (1 << Mon)) {
                 Serial.println(F("Mist 3 Mon On"));
                 tempM2.OnDay = (tempM2.OnDay & ~ (1 << Mon));
-                dowFrog(Mon);
+                //dowBlank(tempM2.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 3 Mon Off"));
                 tempM2.OnDay = (tempM2.OnDay | (1 << Mon));
-                dowBlank(Mon);
+                //dowFrog(tempM2.OnDay);
               }
             }
           }
@@ -1763,13 +1777,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay2 & (1 << Mon)) == (1 << Mon)) {
                 Serial.println(F("Mist 4 Mon On"));
                 tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Mon));
-                dowFrog(Mon);
+                //dowBlank(tempM2.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 4 Mon Off"));
                 tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Mon));
-                dowBlank(Mon);
+                //dowFrog(tempM2.OnDay2);
               }
             }
           }
@@ -1783,13 +1797,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay & (1 << Tue)) == (1 << Tue)) {
                 Serial.println(F("Mist 1 Tue On"));
                 tempM1.OnDay = (tempM1.OnDay & ~ (1 << Tue));
-                dowFrog(Tue);
+                //dowBlank(tempM1.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 1 Tue Off"));
                 tempM1.OnDay = (tempM1.OnDay | (1 << Tue));
-                dowBlank(Tue);
+                //dowFrog(tempM1.OnDay);
               }
             }
           }
@@ -1800,13 +1814,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay2 & (1 << Tue)) == (1 << Tue)) {
                 Serial.println(F("Mist 1 Tue On"));
                 tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Tue));
-                dowFrog(Tue);
+                //dowBlank(tempM1.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 1 Tue Off"));
                 tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Tue));
-                dowBlank(Tue);
+                //dowFrog(tempM1.OnDay2);
               }
             }
           }
@@ -1817,13 +1831,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay & (1 << Tue)) == (1 << Tue)) {
                 Serial.println(F("Mist 3 Tue On"));
                 tempM2.OnDay = (tempM2.OnDay & ~ (1 << Tue));
-                dowFrog(Tue);
+                //dowBlank(tempM2.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 3 Tue Off"));
-                tempM2.OnDay = (tempM2.OnDay | (1 << Tue));
-                dowBlank(Tue);
+                tempM2.OnDay = (tempM2.OnDay | (1 << Tue)); 
+                //dowFrog(tempM2.OnDay);
               }
             }
           }
@@ -1834,13 +1848,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay2 & (1 << Tue)) == (1 << Tue)) {
                 Serial.println(F("Mist 4 Tue On"));
                 tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Tue));
-                dowFrog(Tue);
+                //dowBlank(tempM2.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 4 Tue Off"));
                 tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Tue));
-                dowBlank(Tue);
+                //dowFrog(tempM2.OnDay2);
               }
             }
           }
@@ -1854,13 +1868,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay & (1 << Wed)) == (1 << Wed)) {
                 Serial.println(F("Mist 1 Wed On"));
                 tempM1.OnDay = (tempM1.OnDay & ~ (1 << Wed));
-                dowFrog(Wed);
+                //dowBlank(tempM1.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 1 Wed Off"));
                 tempM1.OnDay = (tempM1.OnDay | (1 << Wed));
-                dowBlank(Wed);
+                //dowFrog(tempM1.OnDay);
               }
             }
           }
@@ -1871,13 +1885,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay2 & (1 << Wed)) == (1 << Wed)) {
                 Serial.println(F("Mist 2 Wed On"));
                 tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Wed));
-                dowFrog(Wed);
+                //dowBlank(tempM1.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 2 Wed Off"));
                 tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Wed));
-                dowBlank(Wed);
+                //dowFrog(tempM1.OnDay2);
               }
             }
           }
@@ -1888,13 +1902,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay & (1 << Wed)) == (1 << Wed)) {
                 Serial.println(F("Mist 3 Wed On"));
                 tempM2.OnDay = (tempM2.OnDay & ~ (1 << Wed));
-                dowFrog(Wed);
+                //dowBlank(tempM2.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 3 Wed Off"));
                 tempM2.OnDay = (tempM2.OnDay | (1 << Wed));
-                dowBlank(Wed);
+                //dowFrog(tempM2.OnDay);
               }
             }
           }
@@ -1905,13 +1919,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay2 & (1 << Wed)) == (1 << Wed)) {
                 Serial.println(F("Mist 4 Wed On"));
                 tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Wed));
-                dowFrog(Wed);
+                //dowBlank(tempM2.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 4 Wed Off"));
                 tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Wed));
-                dowBlank(Wed);
+                //dowFrog(tempM2.OnDay2);
               }
             }
           }
@@ -1925,13 +1939,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay & (1 << Thu)) == (1 << Thu)) {
                 Serial.println(F("Mist 1 Thu On"));
                 tempM1.OnDay = (tempM1.OnDay & ~ (1 << Thu));
-                dowFrog(Thu);
+                //dowBlank(tempM1.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 1 Thu Off"));
                 tempM1.OnDay = (tempM1.OnDay | (1 << Thu));
-                dowBlank(Thu);
+                //dowFrog(tempM1.OnDay);
               }
             }
           }
@@ -1942,13 +1956,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay2 & (1 << Thu)) == (1 << Thu)) {
                 Serial.println(F("Mist 2 Thu On"));
                 tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Thu));
-                dowFrog(Thu);
+                //dowBlank(tempM1.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 2 Thu Off"));
                 tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Thu));
-                dowBlank(Thu);
+                //dowFrog(tempM1.OnDay2);
               }
             }
           }
@@ -1959,13 +1973,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay & (1 << Thu)) == (1 << Thu)) {
                 Serial.println(F("Mist 3 Thu On"));
                 tempM2.OnDay = (tempM2.OnDay & ~ (1 << Thu));
-                dowFrog(Thu);
+                //dowBlank(tempM2.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 3 Thu Off"));
                 tempM2.OnDay = (tempM2.OnDay | (1 << Thu));
-                dowBlank(Thu);
+                //dowFrog(tempM2.OnDay);
               }
             }
           }
@@ -1976,13 +1990,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay2 & (1 << Thu)) == (1 << Thu)) {
                 Serial.println(F("Mist 4 Thu On"));
                 tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Thu));
-                dowFrog(Thu);
+                //dowBlank(tempM2.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 4 Thu Off"));
                 tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Thu));
-                dowBlank(Thu);
+                //dowFrog(tempM2.OnDay2);
               }
             }
           }
@@ -1996,13 +2010,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay & (1 << Fri)) == (1 << Fri)) {
                 Serial.println(F("Mist 1 Fri On"));
                 tempM1.OnDay = (tempM1.OnDay & ~ (1 << Fri));
-                dowFrog(Fri);
+                //dowBlank(tempM1.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 1 Fri Off"));
                 tempM1.OnDay = (tempM1.OnDay | (1 << Fri));
-                dowBlank(Fri);
+                //dowFrog(tempM1.OnDay);
               }
             }
           }
@@ -2013,13 +2027,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay2 & (1 << Fri)) == (1 << Fri)) {
                 Serial.println(F("Mist 2 Fri On"));
                 tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Fri));
-                dowFrog(Fri);
+                //dowBlank(tempM1.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 2 Fri Off"));
                 tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Fri));
-                dowBlank(Fri);
+                //dowFrog(tempM1.OnDay2);
               }
             }
           }
@@ -2030,13 +2044,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay & (1 << Fri)) == (1 << Fri)) {
                 Serial.println(F("Mist 3 Fri On"));
                 tempM2.OnDay = (tempM2.OnDay & ~ (1 << Fri));
-                dowFrog(Fri);
+                //dowBlank(tempM2.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 3 Fri Off"));
                 tempM2.OnDay = (tempM2.OnDay | (1 << Fri));
-                dowBlank(Fri);
+                //dowFrog(tempM2.OnDay);
               }
             }
           }
@@ -2047,13 +2061,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay2 & (1 << Fri)) == (1 << Fri)) {
                 Serial.println(F("Mist 4 Fri On"));
                 tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Fri));
-                dowFrog(Fri);
+                //dowBlank(tempM2.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 4 Fri Off"));
                 tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Fri));
-                dowBlank(Fri);
+                //dowFrog(tempM2.OnDay2);
               }
             }
           }
@@ -2067,13 +2081,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay & (1 << Sat)) == (1 << Sat)) {
                 Serial.println(F("Mist 1 Sat On"));
                 tempM1.OnDay = (tempM1.OnDay & ~ (1 << Sat));
-                dowFrog(Sat);
+                //dowBlank(tempM1.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 1 Sat Off"));
                 tempM1.OnDay = (tempM1.OnDay | (1 << Sat));
-                dowBlank(Sat);
+                //dowFrog(tempM1.OnDay);
               }
             }
           }
@@ -2084,13 +2098,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM1.OnDay2 & (1 << Sat)) == (1 << Sat)) {
                 Serial.println(F("Mist 2 Sat On"));
                 tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Sat));
-                dowFrog(Sat);
+                //dowBlank(tempM1.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 2 Sat Off"));
                 tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Sat));
-                dowBlank(Sat);
+                //dowFrog(tempM1.OnDay2);
               }
             }
           }
@@ -2101,13 +2115,13 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay & (1 << Sat)) == (1 << Sat)) {
                 Serial.println(F("Mist 3 Sat On"));
                 tempM2.OnDay = (tempM2.OnDay & ~ (1 << Sat));
-                dowFrog(Sat);
+                //dowBlank(tempM2.OnDay);
               }
               else
               {
                 Serial.println(F("Mist 3 Sat Off"));
                 tempM2.OnDay = (tempM2.OnDay | (1 << Sat));
-                dowBlank(Sat);
+                //dowFrog(tempM2.OnDay);
               }
             }
           }
@@ -2118,16 +2132,40 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
               if ((tempM2.OnDay2 & (1 << Sat)) == (1 << Sat)) {
                 Serial.println(F("Mist 4 Sat On"));
                 tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Sat));
-                dowFrog(Sat);
+                //dowBlank(tempM2.OnDay2);
               }
               else
               {
                 Serial.println(F("Mist 4 Sat Off"));
                 tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Sat));
-                dowBlank(Sat);
+                //dowFrog(tempM2.OnDay2);               
               }
             }
           }
+        }
+        // end of day of week row, so update frogs ONCE
+        switch(mistScreen)
+        {
+          case 1:
+          dowBlank(tempM1.OnDay);
+          if ((tempM1.Enable & 0xf0))
+          dowFrog(tempM1.OnDay);
+          break;
+          case 2:
+          dowBlank(tempM1.OnDay2);
+          if ((tempM1.Enable & 0x0f))
+          dowFrog(tempM1.OnDay2);
+          break;
+          case 3:
+          dowBlank(tempM2.OnDay);
+          if ((tempM2.Enable & 0xf0))
+          dowFrog(tempM2.OnDay);
+          break;
+          case 4:
+          dowBlank(tempM2.OnDay2);
+          if ((tempM2.Enable & 0x0f))
+          //dowFrog(tempM2.OnDay2);
+          break;
         }
       }
 
@@ -2577,6 +2615,7 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
         blankMistTime();
         myGLCD.setColor(0, 0, 0);
         myGLCD.fillRect(187, 216, 231, 251);
+        dowBlank(0);
       }
       else
       {
@@ -2587,6 +2626,7 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
         duS = mist.Dur1Sec;
         formatMistTime(stH, stM, duM, duS);
         myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+        dowFrog(mist.OnDay);
       }
       break;
     case 2:
@@ -2596,6 +2636,7 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
         blankMistTime();
         myGLCD.setColor(0, 0, 0);
         myGLCD.fillRect(187, 216, 231, 251);
+        dowBlank(0);
       }
       else
       {
@@ -2606,6 +2647,7 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
         duS = mist.Dur2Sec;
         formatMistTime( stH, stM, duM, duS);
         myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+        dowFrog(mist.OnDay2);
       }
       break;
     case 3:
@@ -2615,6 +2657,7 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
         blankMistTime();
         myGLCD.setColor(0, 0, 0);
         myGLCD.fillRect(187, 216, 231, 251);
+        dowBlank(0);
       }
       else
       {
@@ -2625,6 +2668,7 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
         duS = mist.Dur1Sec;
         formatMistTime( stH, stM, duM, duS);
         myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+        dowFrog(mist.OnDay);
       }
       break;
     case 4:
@@ -2634,6 +2678,7 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
         blankMistTime();
         myGLCD.setColor(0, 0, 0);
         myGLCD.fillRect(187, 216, 231, 251);
+        dowBlank(0);
       }
       else
       {
@@ -2644,6 +2689,7 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
         duS = mist.Dur2Sec;
         formatMistTime( stH, stM, duM, duS);
         myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
+        dowFrog(mist.OnDay2);
       }
       break;
   }
@@ -2665,61 +2711,28 @@ void blankMistTime()
   myGLCD.print("  ", 576, 216);
   myGLCD.print("  ", 707, 216);
 }
-void dowFrog(byte day)
+void dowFrog(byte dow)
 {
-  char fname[] = "Frog.raw";
-  switch (day)
-  {
-    case 0:
-      myFiles.load(209, 357, 45, 36, fname , 16, 0);
-      break;
-    case 1:
-      myFiles.load(285, 357, 45, 36, fname , 16, 0);
-      break;
-    case 2:
-      myFiles.load(358, 357, 45, 36, fname , 16, 0);
-      break;
-    case 3:
-      myFiles.load(434, 357, 45, 36, fname , 16, 0);
-      break;
-    case 4:
-      myFiles.load(511, 357, 45, 36, fname , 16, 0);
-      break;
-    case 5:
-      myFiles.load(589, 357, 45, 36, fname , 16, 0);
-      break;
-    case 6:
-      myFiles.load(663, 357, 45, 36, fname , 16, 0);
-      break;
-  }
+//  char fname[] = "Frog.raw";
+if (dow & 0x01) myGLCD.drawBitmap (209, 357, 45, 36, frog);
+if (dow & 0x02) myGLCD.drawBitmap (285, 357, 45, 36, frog);
+if (dow & 0x04) myGLCD.drawBitmap (358, 357, 45, 36, frog);
+if (dow & 0x08) myGLCD.drawBitmap (434, 357, 45, 36, frog);
+if (dow & 0x10) myGLCD.drawBitmap (511, 357, 45, 36, frog);
+if (dow & 0x20) myGLCD.drawBitmap (589, 357, 45, 36, frog);
+if (dow & 0x40) myGLCD.drawBitmap (663, 357, 45, 36, frog);
+// myFiles.load(209, 357, 45, 36, fname , 16, 0);
 }
-void dowBlank(byte day)
+void dowBlank(byte dow)
 {
   myGLCD.setColor(0, 0, 0);
-  switch (day)
-  {
-    case 0:
-      myGLCD.fillRect(209, 357, 253, 392);
-      break;
-    case 1:
-      myGLCD.fillRect(285, 357, 328, 392);
-      break;
-    case 2:
-      myGLCD.fillRect(358, 357, 402, 392);
-      break;
-    case 3:
-      myGLCD.fillRect(434, 357, 479, 392);
-      break;
-    case 4:
-      myGLCD.fillRect(511, 357, 555, 392);
-      break;
-    case 5:
-      myGLCD.fillRect(589, 357, 632, 392);
-      break;
-    case 6:
-      myGLCD.fillRect(663, 357, 708, 392);
-      break;
-  }
+  if (!(dow & 0x01)) myGLCD.fillRect(209, 357, 253, 392);
+  if (!(dow & 0x02)) myGLCD.fillRect(285, 357, 328, 392);
+  if (!(dow & 0x04)) myGLCD.fillRect(358, 357, 402, 392);
+  if (!(dow & 0x08)) myGLCD.fillRect(434, 357, 479, 392);
+  if (!(dow & 0x10)) myGLCD.fillRect(511, 357, 555, 392);
+  if (!(dow & 0x20)) myGLCD.fillRect(589, 357, 632, 392);
+  if (!(dow & 0x40)) myGLCD.fillRect(663, 357, 708, 392);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #if DS1307 == 0
@@ -2798,76 +2811,6 @@ void humRead(float & hum1a)
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 
-////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////    FIRST RUN SETUP   /////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////
-void firstRunSetup()
-{
-  // I'm going to save 50 into EEPROM bank 2000 as a check
-  if (EEPROM.read(2000) != 50)
-  {
-    EEPROM.write(2000, 50); // write to EEPROM so this never runs again
-    // default screen settings
-    EEPROM.write(1, 1); //         <- HomeDelay
-    EEPROM.write(2, 16);//         <- BackLight
-    EEPROM.write(3, 1); //         <- AutoDim
-    EEPROM.write(4, 10);//         <- TouchDelay
-    EEPROM.writeFloat(5, 42.9);//  <- Heater
-    EEPROM.writeFloat(9, 102.9);// <- Fan
-    EEPROM.write(13, 8); //        <- Light.On1Hr
-    EEPROM.write(14, 15); //       <- Light.On1Min
-    EEPROM.write(15, 10); //       <- Light.Dur1Min
-    EEPROM.write(16, 30); //       <- Light.Dur1Sec
-    EEPROM.write(17, 16); //       <- Light.On2Hr
-    EEPROM.write(18, 30); //       <- Light.On2Min
-    EEPROM.write(19, 19); //       <- Light.Dur2Min
-    EEPROM.write(20, 45); //       <- Light.Dur2Sec
-    EEPROM.write(21, 0x00);//      <- Fog.Enable ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )
-    EEPROM.write(22, 8); //        <- Fog.On1Hr
-    EEPROM.write(23, 15); //       <- Fog.On1Min
-    EEPROM.write(24, 10); //       <- Fog.Dur1Min
-    EEPROM.write(25, 30); //       <- Fog.Dur1Sec
-    EEPROM.write(26, 16); //       <- Fog.On2Hr
-    EEPROM.write(27, 30); //       <- Fog.On2Min
-    EEPROM.write(28, 19); //       <- Fog.Dur2Min
-    EEPROM.write(29, 45); //       <- Fog.Dur2Sec
-    EEPROM.write(30, 127); //      <- Fog.OnDay
-    EEPROM.write(31, 127); //      <- Fog.OnDay2
-    EEPROM.write(32, 0xFF);//      <- Mist.Enable ( F0 = 1 enable, 2 disable, FF = 1 & 2 enable )
-    EEPROM.write(33, 8); //        <- Mist.On1Hr
-    EEPROM.write(34, 15); //       <- Mist.On1Min
-    EEPROM.write(35, 10); //       <- Mist.Dur1Min
-    EEPROM.write(36, 30); //       <- Mist.Dur1Sec
-    EEPROM.write(37, 16); //       <- Mist.On2Hr
-    EEPROM.write(38, 30); //       <- Mist.On2Min
-    EEPROM.write(39, 19); //       <- Mist.Dur2Min
-    EEPROM.write(40, 45); //       <- Mist.Dur2Sec
-    EEPROM.write(41, 127); //      <- Mist.OnDay
-    EEPROM.write(42, 127); //      <- Mist.OnDay2
-    EEPROM.write(43, 0xF0);//      <- Mist2.Enable ( F0 = 3 enable, 4 disable, FF = 3 & 4 enable )
-    EEPROM.write(44, 8); //        <- Mist2.On1Hr
-    EEPROM.write(45, 15); //       <- Mist2.On1Min
-    EEPROM.write(46, 10); //       <- Mist2.Dur1Min
-    EEPROM.write(47, 30); //       <- Mist2.Dur1Sec
-    EEPROM.write(48, 16); //       <- Mist2.On2Hr
-    EEPROM.write(49, 30); //       <- Mist2.On2Min
-    EEPROM.write(50, 19); //       <- Mist2.Dur2Min
-    EEPROM.write(51, 45); //       <- Mist2.Dur2Sec
-    EEPROM.write(52, 127); //      <- Mist2.OnDay  ( 0x7F = All week; 0/Sat/Fri/Thu/Wed/Tue/Mon/Sun )
-    EEPROM.write(53, 127); //      <- Mist2.OnDay2 ( 0x7F = All week; 0/Sat/Fri/Thu/Wed/Tue/Mon/Sun )
-    EEPROM.write(54, 0x00);//      <- Fan.Enable ( 0xF0 = 1 enable, 2 disable, 0xFF = 1 & 2 enable )
-    EEPROM.write(55, 8); //        <- Fan.On1Hr
-    EEPROM.write(56, 15); //       <- Fan.On1Min
-    EEPROM.write(57, 10); //       <- Fan.Dur1Min
-    EEPROM.write(58, 30); //       <- Fan.Dur1Sec
-    EEPROM.write(59, 16); //       <- Fan.On2Hr
-    EEPROM.write(60, 30); //       <- Fan.On2Min
-    EEPROM.write(61, 19); //       <- Fan.Dur2Min
-    EEPROM.write(62, 45); //       <- Fan.Dur2Sec
-    EEPROM.write(63, 127); //      <- Fan.OnDay
-    EEPROM.write(64, 127); //      <- Fan.OnDay2
-  }
-}
 ////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////    Relay handlers    /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
