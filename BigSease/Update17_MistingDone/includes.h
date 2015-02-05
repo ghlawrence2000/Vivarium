@@ -16,7 +16,7 @@ typedef struct {
 ////////////////////////////////////////////////////////////////////////////////////////////
 void firstRunSetup()
 {
-  // I'm going to save 50 into EEPROM bank 2000 as a check
+  // I'm going to save 51 into EEPROM bank 2000 as a check
   if (EEPROM.read(2000) != 51)
   {
     EEPROM.write(2000, 51);      // write to EEPROM so this never runs again
