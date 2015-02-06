@@ -124,7 +124,7 @@ extern uint8_t Sinclair_S[];                                                    
 extern uint8_t arial_bold[];                                                                        //
 extern uint8_t Ubuntubold[];                                                                        //
 extern unsigned int frog[0x654];
-extern unsigned int smFrog[0x3B1];
+extern unsigned int smfrog[0x3B1];
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Define pins                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,12 +212,15 @@ byte TouchDelay; // (AutoDim Seconds) 0-59                                      
 byte dispScreen = 1;  // Currently displayed screen, screens shown below                            //
 // 1-home, 2-lights, , 3-temp, 4-fogger, 5-mister, 6-fan, 7-clock, 8-screen                         //
 byte mistScreen = 1;                                                                                //
+byte fanScreen = 1;                                                                                 //
+byte fogScreen = 1;                                                                                 //
 boolean BackLightTouch = true; // initial setting to allow the screen to stay on after boot         //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                               Scheduling and Alarm related variables                             //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 SCHEDULE Light, Fog, Mist, Mist2, Fan;                                                              //
-SCHEDULE tempM1, tempM2;                                                                            //
+SCHEDULE tempM1, tempM2, tempFan1;                                                                  //
+
 float heater;    // = 35.9;                                                                         //
 float fan;       // = 87.9;                                                                         //
 float temp1 = 0.0, temp2 = 0.0, temp3 = 0.0, hum1 = 0.0;                                            //
@@ -893,7 +896,9 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         }
         if ((x >= 171) && (x <= 237)) // Fan Settings Page
         {
+          tempFan1 = Fan;
           screenFan();
+          ffTimePrint(tempFan1, fanScreen);
         }
         if ((x >= 270) && (x <= 370)) // Clock Page
         {
@@ -1129,7 +1134,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       break;
 
     case 4:    // Fogger screen
-      if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
+      if ((x >= 363) && (x < 445) && (y >= 422) && (y < 480)) // Return Home button
       {
         screenHome();
       }
@@ -2288,14 +2293,97 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       break;
 
     case 6:    // Fan screen
-      if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
+      if ((x >= 363) && (x < 445) && (y >= 422) && (y < 480)) // Return Home button
       {
+        if (Fan.Enable != tempFan1.Enable)
+        {
+          Fan.Enable = tempFan1.Enable;
+          EEPROM.write(54, Fan.Enable);
+        }
+        if (Fan.On1Hr != tempFan1.On1Hr)
+        {
+          Fan.On1Hr = tempFan1.On1Hr;
+          EEPROM.write(55, Fan.On1Hr);
+        }
+        if (Fan.On1Min != tempFan1.On1Min)
+        {
+          Fan.On1Min = tempFan1.On1Min;
+          EEPROM.write(56, Fan.On1Min);
+        }
+        if (Fan.Dur1Min != tempFan1.Dur1Min)
+        {
+          Fan.Dur1Min = tempFan1.Dur1Min;
+          EEPROM.write(57, Fan.Dur1Min);
+        }
+        if (Fan.Dur1Sec != tempFan1.Dur1Sec)
+        {
+          Fan.Dur1Sec = tempFan1.Dur1Sec;
+          EEPROM.write(58, Fan.Dur1Sec);
+        }
+        if (Fan.On2Hr != tempFan1.On2Hr)
+        {
+          Fan.On2Hr = tempFan1.On2Hr;
+          EEPROM.write(59, Fan.On2Hr);
+        }
+        if (Fan.On2Min != tempFan1.On2Min)
+        {
+          Fan.On2Min = tempFan1.On2Min;
+          EEPROM.write(60, Fan.On2Min);
+        }
+        if (Fan.Dur2Min != tempFan1.Dur2Min)
+        {
+          Fan.Dur2Min = tempFan1.Dur2Min;
+          EEPROM.write(61, Fan.Dur2Min);
+        }
+        if (Fan.Dur2Sec != tempFan1.Dur2Sec)
+        {
+          Fan.Dur2Sec = tempFan1.Dur2Sec;
+          EEPROM.write(62, Fan.Dur2Sec);
+        }
+        if (Fan.OnDay != tempFan1.OnDay)
+        {
+          Fan.OnDay = tempFan1.OnDay;
+          EEPROM.write(63, Fan.OnDay);
+        }
+        if (Fan.OnDay2 != tempFan1.OnDay2)
+        {
+          Fan.OnDay2 = tempFan1.OnDay2;
+          EEPROM.write(64, Fan.OnDay2);
+        }
         screenHome();
+      }
+      if ((x >= 78) && (x < 115))
+      {
+        if ((y >= 229) && (y < 263))
+        {
+              if (!(tempFan1.Enable & 0xF0)) // Set Enable Fan 1
+              {
+                tempFan1.Enable = ((tempFan1.Enable & 0x0F) + 0xF0);
+              }
+              else
+              {
+                tempFan1.Enable = (tempFan1.Enable & 0x0F);
+              }
+              fanScreen=1;
+        }
+        if ((y >= 359) && (y < 393))
+        {
+              if (!(tempFan1.Enable & 0x0F)) // Set Enable Fan 2
+              {
+                tempFan1.Enable = ((tempFan1.Enable & 0xF0) + 0x0F);
+              }
+              else
+              {
+                tempFan1.Enable = (tempFan1.Enable & 0xF0);
+              }
+              fanScreen=2;
+        }
+        ffTimePrint(tempFan1, fanScreen);
       }
       break;
 
     case 7:    // Clock screen
-      if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
+      if ((x >= 363) && (x <= 444) && (y >= 422) && (y < 480)) // Return Home button
       {
         TouchRepeatDelay = tmpTouchRepeatDelay;
         screenHome();
@@ -2378,7 +2466,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       break;
 
     case 8:    // Screen screen
-      if ((x >= 363) && (x <= 444) && (y >= 422) && (y <= 479)) // Return Home button
+      if ((x >= 363) && (x <= 444) && (y >= 422) && (y < 480)) // Return Home button
       {
         TouchRepeatDelay = tmpTouchRepeatDelay;
         if (tempAD != AutoDim) {
@@ -2605,6 +2693,8 @@ void SetTimePrint(int x, int y)
   myGLCD.print(chDate, x, y);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+//                         Misting Screen time printing and blanking routine                     //
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void MistTimePrint(SCHEDULE mist, byte mscreen)
 {
   byte stH, stM, duM, duS;
@@ -2700,6 +2790,8 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
   }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+//                  Misting Screen time printing and blanking support routines                   //
+///////////////////////////////////////////////////////////////////////////////////////////////////
 void formatMistTime(byte Hr, byte Min, byte dMin, byte dSec)
 {
   myGLCD.setColor(255, 77, 0);
@@ -2739,6 +2831,125 @@ void dowBlank(byte dow)
   if (!(dow & 0x10)) myGLCD.fillRect(511, 357, 555, 392);
   if (!(dow & 0x20)) myGLCD.fillRect(589, 357, 632, 392);
   if (!(dow & 0x40)) myGLCD.fillRect(663, 357, 708, 392);
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//                         Fan/Fog Screen time printing and blanking routine                     //
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void ffTimePrint(SCHEDULE mist, byte mscreen)
+{
+  byte stH, stM, duM, duS;
+  switch (mscreen) {
+    case 1:
+      if (!(mist.Enable & 0xf0))
+      {
+        Serial.println("FanFog screen 1 AND disbled");
+        blankFogfanTime(mscreen);
+        myGLCD.setColor(0, 0, 0);
+        myGLCD.fillRect(79, 233, 113, 259);
+        ffBlank(0);
+      }
+      else
+      {
+        Serial.println("FanFog screen 1 AND enabled");
+        stH = mist.On1Hr;
+        stM = mist.On1Min;
+        duM = mist.Dur1Min;
+        duS = mist.Dur1Sec;
+        formatFogfanTime(stH, stM, duM, duS, mscreen);
+        myGLCD.drawBitmap (79, 233, 35, 27, smfrog);
+        ffBlank(mist.OnDay);
+        ffFrog(mist.OnDay);
+      }
+      break;
+    case 2:
+      if (!(mist.Enable & 0x0f))
+      {
+        Serial.println("FanFog screen 2 AND disabled");
+        blankFogfanTime(mscreen);
+        myGLCD.setColor(0, 0, 0);
+        myGLCD.fillRect(79, 363, 113, 389);
+        ffBlank(0);
+      }
+      else
+      {
+        Serial.println("FanFog screen 2 AND enabled");
+        stH = mist.On2Hr;
+        stM = mist.On2Min;
+        duM = mist.Dur2Min;
+        duS = mist.Dur2Sec;
+        formatFogfanTime( stH, stM, duM, duS, mscreen);
+        myGLCD.drawBitmap (79, 363, 35, 27, smfrog);
+        ffBlank(mist.OnDay2);
+        ffFrog(mist.OnDay2);
+      }
+      break;
+  }
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//                  Fan/Fog Screen time printing and blanking support routines                   //
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void formatFogfanTime(byte Hr, byte Min, byte dMin, byte dSec, byte mscreen)
+{
+switch(mscreen)
+{
+  case 1:
+  myGLCD.setColor(255, 77, 0);
+  myGLCD.setFont(Ubuntubold);
+  myGLCD.printNumI(Hr, 210, 210, 2, ' ');
+  myGLCD.printNumI(Min, 328, 210, 2, '0');
+  myGLCD.printNumI(dMin, 480, 210, 2 , ' ');
+  myGLCD.printNumI(dSec, 598, 210, 2, '0');
+  break;
+  case 2:
+  myGLCD.setColor(255, 77, 0);
+  myGLCD.setFont(Ubuntubold);
+  myGLCD.printNumI(Hr, 210, 344, 2, ' ');
+  myGLCD.printNumI(Min, 328, 344, 2, '0');
+  myGLCD.printNumI(dMin, 480, 344, 2 , ' ');
+  myGLCD.printNumI(dSec, 598, 344, 2, '0');
+  break;  
+}
+}
+void blankFogfanTime(byte mscreen)
+{
+switch(mscreen)
+{
+  case 1:
+  myGLCD.setFont(Ubuntubold);
+  myGLCD.print("  ", 210, 210);
+  myGLCD.print("  ", 328, 210);
+  myGLCD.print("  ", 480, 210);
+  myGLCD.print("  ", 598, 210);
+  break;
+  case 2:
+  myGLCD.setFont(Ubuntubold);
+  myGLCD.print("  ", 210, 344);
+  myGLCD.print("  ", 328, 344);
+  myGLCD.print("  ", 480, 344);
+  myGLCD.print("  ", 598, 344);
+  break;
+}
+}
+void ffFrog(byte dow)
+{
+  if (dow & 0x01) myGLCD.drawBitmap (678, 133, 35, 27, smfrog);
+  if (dow & 0x02) myGLCD.drawBitmap (722, 179, 35, 27, smfrog);
+  if (dow & 0x04) myGLCD.drawBitmap (678, 225, 35, 27, smfrog);
+  if (dow & 0x08) myGLCD.drawBitmap (722, 271, 35, 27, smfrog);
+  if (dow & 0x10) myGLCD.drawBitmap (678, 317, 35, 27, smfrog);
+  if (dow & 0x20) myGLCD.drawBitmap (722, 363, 35, 27, smfrog);
+  if (dow & 0x40) myGLCD.drawBitmap (678, 408, 35, 27, smfrog);
+}
+void ffBlank(byte dow)
+{
+  myGLCD.setColor(0, 0, 0);
+  if (!(dow & 0x01)) myGLCD.fillRect(678, 133, 712, 159);
+  if (!(dow & 0x02)) myGLCD.fillRect(722, 179, 756, 205);
+  if (!(dow & 0x04)) myGLCD.fillRect(678, 225, 712, 251);
+  if (!(dow & 0x08)) myGLCD.fillRect(722, 271, 756, 297);
+  if (!(dow & 0x10)) myGLCD.fillRect(678, 317, 712, 343);
+  if (!(dow & 0x20)) myGLCD.fillRect(722, 363, 756, 389);
+  if (!(dow & 0x40)) myGLCD.fillRect(678, 408, 712, 434);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #if DS1307 == 0
