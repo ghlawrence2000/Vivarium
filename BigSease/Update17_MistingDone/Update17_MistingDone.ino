@@ -124,6 +124,7 @@ extern uint8_t Sinclair_S[];                                                    
 extern uint8_t arial_bold[];                                                                        //
 extern uint8_t Ubuntubold[];                                                                        //
 extern unsigned int frog[0x654];
+extern unsigned int smFrog[0x3B1];
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Define pins                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
