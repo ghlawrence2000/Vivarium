@@ -6,8 +6,8 @@
 // All code is public domain, feel free to use, abuse, edit, and share                              //
 // Written for Arduino Mega 2560                                                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                     VERSION:  11/02/15 21:00GMT                                  //
-//                                        Development Version 21                                    //
+//                                     VERSION:  13/02/15 22:00GMT                                  //
+//                                        Development Version 22                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         CODE ORDER:                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,7 +112,6 @@
 #define DS1307   1 // <====== 1 for DS1307, 0 for Software                                          //
 #define fastest  1 // <====== 1 = MAX speed all screens in own page / 0 = 2 Screens share a page... //
 #define debug    1 // <====== 1 = Serial output enabled                                             //
-//#define USE_SPECIALIST_METHODS
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                           Initiate Screen, Touch, Imaging and Fonts                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,15 +143,6 @@ extern unsigned int smfrog[0x3B1];                                              
 #define pwrLight2    4   // binary 16                                                               //
 #define pwrLight1    5   // binary 32                                                               //
 byte Relay = 0x3F, prevRelay = 0x40;                                                                //
-/*struct PWR                                                                                        //
-{                                                                                                   //
-  byte pwrLight1;                                                                                   //
-  byte pwrLight2;                                                                                   //
-  byte pwrTemp1;                                                                                    //
-  byte pwrFogger1;                                                                                  //
-  byte pwrMisting1;                                                                                 //
-  byte pwrAUX1;                                                                                     //
-}*/                                                                                                 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Pins for sensors                                         //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +180,7 @@ const char *Day[] = {
 const char *Month[] = {
   "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };                                                                                                  //
-tmElements_t tmpRTC, prevRTC, lastLoopRTC, schedRTC;                                                          //
+tmElements_t tmpRTC, prevRTC, lastLoopRTC, schedRTC;                                                //
 unsigned long tempTime;                                                                             //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Various timings to keep track of                                //
@@ -223,8 +213,8 @@ SCHEDULE tempM1, tempM2, tempFan1, tempFog1;                                    
 float heater;    // = 35.9;                                                                         //
 float fan;       // = 87.9;                                                                         //
 float temp1 = 0.0, temp2 = 0.0, temp3 = 0.0, hum1 = 0.0;                                            //
-AlarmID_t alarms[130];
-byte alarmset = 255, hourcount = 0;
+AlarmID_t alarms[117];                                                                              //
+byte alarmset = 255, hourcount = 0;                                                                 //
 #define Sun          0   // binary  1                                                               //  
 #define Mon          1   // binary  2                                                               //
 #define Tue          2   // binary  4                                                               //
@@ -369,21 +359,21 @@ void setup()                                                                    
   Serial.println(F("Software RTC is running!"));                                                    //
   Serial.println(F("Send sync message eg T1420722534 (Can type in serial monitor)"));               //
 #endif                                                                                              //
-#endif//
-  setSyncInterval(60);
+#endif                                                                                              //
+  setSyncInterval(60);                                                                              //
   setSyncProvider(syncProvider);// reference our syncProvider function instead of RTC_DS1307::get();//
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   //                           Set internal clock with RTC at zero seconds                          //
   ////////////////////////////////////////////////////////////////////////////////////////////////////
-#if DS1307 == 1
-  time_t timeNow1 = rtc.now().unixtime();
-  while (second(timeNow1) != 0)
-  {
+#if DS1307 == 1                                                                                     //
+  time_t timeNow1 = rtc.now().unixtime();                                                           //
+  while (second(timeNow1) != 57)                                                                    //
+  { //                                                                                              //
     timeNow1 = rtc.now().unixtime();                                                                //
-  }
-  setTime(timeNow1); // set time to Saturday 8:29:00am Jan 1 2011
-  setAlarms();
-#endif
+  } //                                                                                              //
+  setTime(timeNow1); // set time to Saturday 8:29:00am Jan 1 2011                                   //
+  setAlarms();                                                                                      //
+#endif                                                                                              //
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   //          Turn OFF all outputs and define relays pin.  Active Low, High is off.                 //
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -522,10 +512,9 @@ void loop()                                                                     
     } //                                                                                            //
   } //                                                                                              //
   if ((rightNow - tempTime) >= 1) { //                                                              //
-    //digitalClockDisplay();
-    myGLCD.setColor(255, 77, 0);                                                                    //
     if (dispScreen == 1 || dispScreen == 3)                                                         //
     { //                                                                                            //
+      myGLCD.setColor(255, 77, 0);                                                                  //
       myGLCD.setFont(Ubuntubold);                                                                   //
     } //                                                                                            //
     char sensor[6] = "     ";                                                                       //
@@ -609,7 +598,7 @@ void loop()                                                                     
       } //                                                                                          //
     } //                                                                                            //
   } //                                                                                              //
-  Alarm.delay(0);
+  Alarm.delay(0);                                                                                   //
   procRelays(Relay);  // Display active relay icons on 'Home' Page                                  //
 } //                                                                                                //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -635,7 +624,6 @@ void screenHome()  // draw main home screen showing overview info
     tempRead(temp1, temp2, temp3);
   }
   unsigned long rightNow = now();
-
   myGLCD.setColor(255, 77, 0);
   myGLCD.setFont(Ubuntubold);
   char sensor[6] = "     ";
@@ -725,6 +713,8 @@ void screenFogger()  // Fogging screen
 #if debug
   Serial.println(F("Fogger Screen"));
 #endif
+  tmpTouchRepeatDelay = TouchRepeatDelay;
+  TouchRepeatDelay = 100;
   updateTime = false;
 }
 void screenMist()  // Misting Screen
@@ -733,6 +723,8 @@ void screenMist()  // Misting Screen
 #if debug
   Serial.println(F("Misting Screen"));
 #endif
+  tmpTouchRepeatDelay = TouchRepeatDelay;
+  TouchRepeatDelay = 150;
   updateTime = false;
 }
 void screenFan()  // Fan screen
@@ -742,6 +734,8 @@ void screenFan()  // Fan screen
 #if debug
   Serial.println(F("Fan Screen"));
 #endif
+  tmpTouchRepeatDelay = TouchRepeatDelay;
+  TouchRepeatDelay = 150;
   updateTime = false;
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -813,6 +807,15 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
   switch (dispScreen)
   {
     case 1:  // home screen
+#if debug
+      if ((y >= 64) && (y < 114))
+      {
+        if ((x >= 371) && ( x < 421)) // 'Secret button'
+        {
+          listActiveAlarms();
+        }
+      }
+#endif
       if ((y >= 117) && (y < 235))
       {
         if ((x >= 59) && (x <= 134)) // Light Settings Page
@@ -1135,6 +1138,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
     case 4:    // Fogger screen
       if ((x >= 363) && (x < 445) && (y >= 422) && (y < 480)) // Return Home button
       {
+        TouchRepeatDelay = tmpTouchRepeatDelay;
         byte change = 0xFF;
         if (Fog.Enable != tempFog1.Enable)
         {
@@ -1474,6 +1478,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
     case 5:    // Misting screen
       if ((x >= 363) && (x < 445) && (y >= 422) && (y < 480)) // Return Home button
       {
+        TouchRepeatDelay = tmpTouchRepeatDelay;
         byte change = 255;
         if (Mist.Enable != tempM1.Enable)
         {
@@ -2828,6 +2833,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
     case 6:    // Fan screen
       if ((x >= 363) && (x < 445) && (y >= 422) && (y < 480)) // Return Home button
       {
+        TouchRepeatDelay = tmpTouchRepeatDelay;
         byte change = 255;
         if (Fan.Enable != tempFan1.Enable)
         {
@@ -3241,8 +3247,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           rtc.adjust(xo);
           setTime(xo);
           setAlarms();
-          //rtc.now();
-          //Serial.println(xo);
           TouchRepeatDelay = tmpTouchRepeatDelay;
           screenHome();
         }
@@ -3352,7 +3356,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
 ////////////////////////////////////////////////////////////////////////////////////////////
 time_t syncProvider()
 {
-  Serial.println(F("syncProvider"));
 #if(DS1307 == 0)
   hourcount++;
   if (hourcount > 60)
@@ -3362,7 +3365,9 @@ time_t syncProvider()
     mynow++;
     setTime(mynow);
     setAlarms();
-    Serial.println("Add 1 second per hour");
+#if debug
+    Serial.println(F("Add 1 second per hour"));
+#endif
   }
 #endif
   //setAlarms();
@@ -3936,7 +3941,7 @@ void procRelays(byte relay)
   char relays[][10] = {"swon.raw" , "swoff.raw" };
   if (relay != prevRelay)
   {
-    if ((relay & (1 << pwrLight2)) == (1 << pwrLight2)) // Lights 1
+    if ((relay & (1 << pwrLight2)) == (1 << pwrLight2)) // Lights 2
     {
       myFiles.loadcpld(555, 418, 22, 22, relays[1], 1, 16);
     }
@@ -3944,7 +3949,7 @@ void procRelays(byte relay)
     {
       myFiles.loadcpld(555, 418, 22, 22, relays[0], 1, 16);
     }
-    if ((relay & (1 << pwrLight1)) == (1 << pwrLight1)) // Lights 2
+    if ((relay & (1 << pwrLight1)) == (1 << pwrLight1)) // Lights 1
     {
       myFiles.loadcpld(580, 418, 22, 22, relays[1], 1, 16);
     }
@@ -3994,8 +3999,10 @@ void setAlarms()
 {
   if (alarmset == 255)
   {
+#if debug
     Serial.println(F("Alarms set"));
     digitalClockDisplay();
+#endif
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     alarms[0] = Alarm.alarmRepeat(Light.On1Hr, Light.On1Min, 0, Lights1On);  //
     alarms[1] = Alarm.alarmRepeat(Light.Dur1Min, Light.Dur1Sec, 0, Lights1Off); //
@@ -4308,6 +4315,7 @@ void setAlarms()
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     alarms[116] = Alarm.timerRepeat(15, Repeats);          // timer for every 15 seconds
+#if debug
     for (byte q = 0; q < 117; q++)
     {
       Serial.print(F("Alarm element "));
@@ -4315,10 +4323,12 @@ void setAlarms()
       Serial.print(' ');
       Serial.println(alarms[q]);
     }
+#endif
     alarmset = 0;
   }
   else
   {
+#if debug
     Serial.println(F("Reset alarms here"));
     for ( byte q = 0; q < 117; q++)
     {
@@ -4326,6 +4336,7 @@ void setAlarms()
       Alarm.disable(alarms[q]);
       alarms[q] = 255;
     }
+#endif
     alarms[0] = Alarm.alarmRepeat(Light.On1Hr, Light.On1Min, 0, Lights1On);  //
     alarms[1] = Alarm.alarmRepeat(Light.Dur1Min, Light.Dur1Sec, 0, Lights1Off); //
     alarms[2] = Alarm.alarmRepeat(Light.On2Hr, Light.On2Min, 0, Lights2On);  //
@@ -4637,6 +4648,7 @@ void setAlarms()
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //alarms[116] = Alarm.timerRepeat(15, Repeats);          // timer for every 15 seconds
+#if debug
     for (byte q = 0; q < 117; q++)
     {
       Serial.print("alarm element ");
@@ -4644,61 +4656,370 @@ void setAlarms()
       Serial.print(' ');
       Serial.println(alarms[q]);
     }
+#endif
     alarmset = 0;
   }
 }
 void Lights1On() {
+#if debug
   Serial.println(F("Lights1 on"));
   digitalClockDisplay();
+#endif
   relayOn(pwrLight1);
 }
 void Lights1Off() {
+#if debug
   Serial.println(F("Lights1 off"));
   digitalClockDisplay();
+#endif
   relayOff(pwrLight1);
 }
 void Lights2On() {
+#if debug
   Serial.println(F("Lights2 on"));
   digitalClockDisplay();
+#endif
   relayOn(pwrLight2);
 }
 void Lights2Off() {
+#if debug
   Serial.println(F("Lights2 off"));
   digitalClockDisplay();
+#endif
   relayOff(pwrLight2);
 }
 void FogOn() {                                                        //
+#if debug
   Serial.println(F("Fog On"));
   digitalClockDisplay();
+#endif
   relayOn(pwrFogger1);
 }
 void FogOff() {                                                     //
+#if debug
   Serial.println(F("Fog Off"));
   digitalClockDisplay();
+#endif
   relayOff(pwrFogger1);
 }
 void FanOn() {                                                      //
+#if debug
   Serial.println(F("Fan On"));
   digitalClockDisplay();
+#endif
   relayOn(pwrFan1);
 }
 void FanOff() {                                                   //
+#if debug
   Serial.println(F("Fan Off"));
   digitalClockDisplay();
+#endif
   relayOff(pwrFan1);
 }
 void MistOn() {                                                      //
+#if debug
   Serial.println(F("Mist On"));
   digitalClockDisplay();
+#endif
   relayOn(pwrMisting1);
 }
 void MistOff() {                                                   //
+#if debug
   Serial.println(F("Mist Off"));
   digitalClockDisplay();
+#endif
   relayOff(pwrMisting1);
 }
 void Repeats() {
+#if debug
   digitalClockDisplay();
   Serial.println(F("15 second timer"));
+#endif
 }
-
+void listActiveAlarms()
+{
+  char buf[60];
+  Serial.println(F("Alarm Dump\n\nLights\n"));
+  sprintf(buf, "Lights 1_On %02d:%02d Off %02d:%02d\n", Light.On1Hr, Light.On1Min, Light.Dur1Min, Light.Dur1Sec );
+  Serial.print(buf);
+  sprintf(buf, "Lights 2_On %02d:%02d Off %02d:%02d\n", Light.On2Hr, Light.On2Min, Light.Dur2Min, Light.Dur2Sec );
+  Serial.println(buf);
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Serial.println(F("Fogger\n"));
+  if (!Fog.Enable) Serial.print(F("No active fog alarms!\n"));
+  if (Fog.Enable & 0xF0) {
+    sprintf(buf, "Fog    1_On %02d:%02d Off %02d:%02d ", Fog.On1Hr, Fog.On1Min, Fog.Dur1Min, Fog.Dur1Sec );
+    if (Fog.OnDay & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println();
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Fog.Enable & 0x0F) {
+    sprintf(buf, "Fog    2_On %02d:%02d Off %02d:%02d ", Fog.On2Hr, Fog.On2Min, Fog.Dur2Min, Fog.Dur2Sec );
+    if (Fog.OnDay2 & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.println(buf);
+  } else Serial.println();
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Serial.println(F("Misting\n"));
+  if ((!(Mist.Enable)) && (!(Mist2.Enable))) Serial.print(F("No active Mist alarms!\n"));
+  if (Mist.Enable & 0xF0) {
+    sprintf(buf, "Mist   1_On %02d:%02d Off %02d:%02d ", Mist.On1Hr, Mist.On1Min, Mist.Dur1Min, Mist.Dur1Sec );
+    if (Mist.OnDay & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println();
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist.Enable & 0x0F) {
+    sprintf(buf, "Mist   2_On %02d:%02d Off %02d:%02d ", Mist.On2Hr, Mist.On2Min, Mist.Dur2Min, Mist.Dur2Sec );
+    if (Mist.OnDay2 & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println();
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist2.Enable & 0xF0) {
+    sprintf(buf, "Mist   3_On %02d:%02d Off %02d:%02d ", Mist2.On1Hr, Mist2.On1Min, Mist2.Dur1Min, Mist2.Dur1Sec );
+    if (Mist2.OnDay & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println();
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist2.Enable & 0x0F) {
+    sprintf(buf, "Mist   4_On %02d:%02d Off %02d:%02d ", Mist2.On2Hr, Mist2.On2Min, Mist2.Dur2Min, Mist2.Dur2Sec );
+    if (Mist2.OnDay2 & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.println(buf);
+  } else Serial.println();
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Serial.println(F("Fan\n"));
+  if (!Fan.Enable) Serial.print(F("No active fan alarms!\n"));
+  if (Fan.Enable & 0xF0) {
+    sprintf(buf, "Fan    1_On %02d:%02d Off %02d:%02d ", Fan.On1Hr, Fan.On1Min, Fan.Dur1Min, Fan.Dur1Sec );
+    if (Fan.OnDay & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println();
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Fan.Enable & 0x0F) {
+    sprintf(buf, "Fan    2_On %02d:%02d Off %02d:%02d ", Fan.On2Hr, Fan.On2Min, Fan.Dur2Min, Fan.Dur2Sec );
+    if (Fan.OnDay2 & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.println(buf);
+  } else Serial.println();
+}
