@@ -4766,7 +4766,7 @@ void listActiveAlarms()
   char buf[60];
   myGLCD.setWritePage(0);
   myGLCD.clrScr();
-  myGLCD.setColor(255, 77, 0);
+  myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
   const char a[] PROGMEM="Alarm Dump";
   Serial.println(a);
@@ -4777,7 +4777,7 @@ void listActiveAlarms()
   Serial.println();
   myGLCD.print(b, 10, 40);
   myGLCD.setFont(TinyFont);
-  myGLCD.setColor(255,255,255);
+  myGLCD.setColor(134, 250, 124);
   sprintf(buf, "Lights 1_On %02d:%02d Off %02d:%02d", Light.On1Hr, Light.On1Min, Light.Dur1Min, Light.Dur1Sec );
   myGLCD.print(buf, 20, 80);
   Serial.print(buf);
@@ -4787,14 +4787,14 @@ void listActiveAlarms()
   Serial.println(buf);
   Serial.println();
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  myGLCD.setColor(255, 77, 0);
+  myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
   const char c[] PROGMEM="Fogger";
   myGLCD.print(c, 10, 110);
   Serial.println(c);
   Serial.println();
   myGLCD.setFont(TinyFont);
-  myGLCD.setColor(255,255,255);
+  myGLCD.setColor(134, 250, 124);
   if (Fog.Enable & 0xF0) {
     sprintf(buf, "Fog    1_On %02d:%02d Off %02d:%02d ", Fog.On1Hr, Fog.On1Min, Fog.Dur1Min, Fog.Dur1Sec );
     if (Fog.OnDay & 1 << Sun)
@@ -4825,7 +4825,6 @@ void listActiveAlarms()
     {
       strcat(buf, "Sat ");
     } else strcat(buf, "    ");
-    //strcat(buf, "\n");
     Serial.print(buf);
     Serial.println();
     myGLCD.print(buf, 20, 150);
@@ -4868,7 +4867,6 @@ void listActiveAlarms()
     {
       strcat(buf, "Sat ");
     } else strcat(buf, "    ");
-    //strcat(buf, "\n");
     myGLCD.print(buf, 20, 160);
     Serial.println(buf);
     Serial.println();
@@ -4881,14 +4879,14 @@ void listActiveAlarms()
     Serial.println();
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  myGLCD.setColor(255, 77, 0);
+  myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
   const char f[] PROGMEM="Misting";
   myGLCD.print(f, 10, 180);
   Serial.println(f);
   Serial.println();
   myGLCD.setFont(TinyFont);
-  myGLCD.setColor(255,255,255);
+  myGLCD.setColor(134, 250, 124);
   if (Mist.Enable & 0xF0) {
     sprintf(buf, "Mist   1_On %02d:%02d Off %02d:%02d ", Mist.On1Hr, Mist.On1Min, Mist.Dur1Min, Mist.Dur1Sec );
     if (Mist.OnDay & 1 << Sun)
@@ -4919,7 +4917,6 @@ void listActiveAlarms()
     {
       strcat(buf, "Sat ");
     } else strcat(buf, "    ");
-    //strcat(buf, "\n");
     myGLCD.print(buf, 20, 220);
     Serial.print(buf);
     Serial.println();
@@ -4962,7 +4959,6 @@ void listActiveAlarms()
     {
       strcat(buf, "Sat ");
     } else strcat(buf, "    ");
-    //strcat(buf, "\n");
     myGLCD.print(buf, 20, 230);
     Serial.print(buf);
     Serial.println();
@@ -5005,7 +5001,6 @@ void listActiveAlarms()
     {
       strcat(buf, "Sat ");
     } else strcat(buf, "    ");
-    //strcat(buf, "\n");
     myGLCD.print(buf, 20, 240);
     Serial.print(buf);
     Serial.println();
@@ -5048,7 +5043,6 @@ void listActiveAlarms()
     {
       strcat(buf, "Sat ");
     } else strcat(buf, "    ");
-    //strcat(buf, "\n");
     myGLCD.print(buf, 20, 250);
     Serial.println(buf);
     Serial.println();
@@ -5061,14 +5055,14 @@ void listActiveAlarms()
     Serial.println();
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  myGLCD.setColor(255, 77, 0);
+  myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
   const char k[] PROGMEM="Fan";
   myGLCD.print(k, 10, 270);
   Serial.println(k);
   Serial.println();
   myGLCD.setFont(TinyFont);
-  myGLCD.setColor(255,255,255);
+  myGLCD.setColor(134, 250, 124);
   if (Fan.Enable & 0xF0) {
     sprintf(buf, "Fan    1_On %02d:%02d Off %02d:%02d ", Fan.On1Hr, Fan.On1Min, Fan.Dur1Min, Fan.Dur1Sec );
     if (Fan.OnDay & 1 << Sun)
@@ -5099,7 +5093,6 @@ void listActiveAlarms()
     {
       strcat(buf, "Sat ");
     } else strcat(buf, "    ");
-    //strcat(buf, "\n");
     myGLCD.print(buf, 20, 310);
     Serial.print(buf);
     Serial.println();
@@ -5142,7 +5135,6 @@ void listActiveAlarms()
     {
       strcat(buf, "Sat ");
     } else strcat(buf, "    ");
-    //strcat(buf, "\n");
     myGLCD.print(buf, 20, 320);
     Serial.println(buf);
     Serial.println();
@@ -5154,14 +5146,14 @@ void listActiveAlarms()
     Serial.println(m);
     Serial.println();
   }
-  myGLCD.setColor(255, 77, 0);
+  myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
   const char n[] PROGMEM="Hi/Lo";
   myGLCD.print(n, 10, 340);
   Serial.println(n);
   Serial.println();
   myGLCD.setFont(TinyFont);
-  myGLCD.setColor(255,255,255);
+  myGLCD.setColor(134, 250, 124);
   char outstr1[10];
   char outstr2[10];
   if (temp1Hi != 0 || temp1Lo != 65535)
