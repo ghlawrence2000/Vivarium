@@ -109,7 +109,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                   Compile time options                                           //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-#define DS1307   0 // <====== 1 for DS1307, 0 for Software                                          //
+#define DS1307   1 // <====== 1 for DS1307, 0 for Software                                          //
 #define fastest  1 // <====== 1 = MAX speed all screens in own page / 0 = 2 Screens share a page... //
 #define debug    1 // <====== 1 = Serial output enabled                                             //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -408,18 +408,18 @@ void setup()
 #if debug
   unsigned long performance = millis();
 #endif
-  myFiles.loadcpld(230, 40, 378, 268, "Logo.raw", 0, 6);  // <==== Write to writepage 0
+  myFiles.loadcpld(230, 40, 378, 268, "Logo.raw", 0, 4);  // <==== Write to writepage 0
   myFiles.loadcpld(340, 360, 149, 47, "Copy.raw", 0, 6);  // <==== Write to writepage 0
   myGLCD.setDisplayPage(0);                               // <==== Display writepage 0
-  myFiles.loadcpld(0, 0, 800, 480, "1Home.raw", 1, 3);
-  myFiles.loadcpld(0, 0, 800, 480, "2Lights.raw", 2, 3);
-  myFiles.loadcpld(0, 0, 800, 480, "3Temp.raw", 3, 3);
-  myFiles.loadcpld(0, 0, 800, 480, "456Sched.raw", 4, 3); //Fan/Fog to save video pages...
-  myFiles.loadcpld(0, 0, 800, 480, "5MistG.raw", 7, 3);   //New Mist...
+  myFiles.loadcpld(0, 0, 800, 480, "1Home.raw", 1, 2);
+  myFiles.loadcpld(0, 0, 800, 480, "2Lights.raw", 2, 2);
+  myFiles.loadcpld(0, 0, 800, 480, "3Temp.raw", 3, 2);
+  myFiles.loadcpld(0, 0, 800, 480, "456Sched.raw", 4, 2); //Fan/Fog to save video pages...
+  myFiles.loadcpld(0, 0, 800, 480, "5MistG.raw", 7, 2);   //New Mist...
 
 #if fastest
-  myFiles.loadcpld(0, 0, 800, 480, "7Clock.raw", 5, 3);
-  myFiles.loadcpld(0, 0, 800, 480, "8Screen.raw", 6, 3);
+  myFiles.loadcpld(0, 0, 800, 480, "7Clock.raw", 5, 2);
+  myFiles.loadcpld(0, 0, 800, 480, "8Screen.raw", 6, 2);
 #endif
   // display home screen
   screenHome();
@@ -2356,27 +2356,27 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       {
         if ((y >= 229) && (y < 263))
         {
-              if (!(tempFan1.Enable & 0xF0)) // Set Enable Fan 1
-              {
-                tempFan1.Enable = ((tempFan1.Enable & 0x0F) + 0xF0);
-              }
-              else
-              {
-                tempFan1.Enable = (tempFan1.Enable & 0x0F);
-              }
-              fanScreen=1;
+          if (!(tempFan1.Enable & 0xF0)) // Set Enable Fan 1
+          {
+            tempFan1.Enable = ((tempFan1.Enable & 0x0F) + 0xF0);
+          }
+          else
+          {
+            tempFan1.Enable = (tempFan1.Enable & 0x0F);
+          }
+          fanScreen = 1;
         }
         if ((y >= 359) && (y < 393))
         {
-              if (!(tempFan1.Enable & 0x0F)) // Set Enable Fan 2
-              {
-                tempFan1.Enable = ((tempFan1.Enable & 0xF0) + 0x0F);
-              }
-              else
-              {
-                tempFan1.Enable = (tempFan1.Enable & 0xF0);
-              }
-              fanScreen=2;
+          if (!(tempFan1.Enable & 0x0F)) // Set Enable Fan 2
+          {
+            tempFan1.Enable = ((tempFan1.Enable & 0xF0) + 0x0F);
+          }
+          else
+          {
+            tempFan1.Enable = (tempFan1.Enable & 0xF0);
+          }
+          fanScreen = 2;
         }
         ffTimePrint(tempFan1, fanScreen);
       }
@@ -2890,45 +2890,45 @@ void ffTimePrint(SCHEDULE mist, byte mscreen)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void formatFogfanTime(byte Hr, byte Min, byte dMin, byte dSec, byte mscreen)
 {
-switch(mscreen)
-{
-  case 1:
-  myGLCD.setColor(255, 77, 0);
-  myGLCD.setFont(Ubuntubold);
-  myGLCD.printNumI(Hr, 210, 210, 2, ' ');
-  myGLCD.printNumI(Min, 328, 210, 2, '0');
-  myGLCD.printNumI(dMin, 480, 210, 2 , ' ');
-  myGLCD.printNumI(dSec, 598, 210, 2, '0');
-  break;
-  case 2:
-  myGLCD.setColor(255, 77, 0);
-  myGLCD.setFont(Ubuntubold);
-  myGLCD.printNumI(Hr, 210, 344, 2, ' ');
-  myGLCD.printNumI(Min, 328, 344, 2, '0');
-  myGLCD.printNumI(dMin, 480, 344, 2 , ' ');
-  myGLCD.printNumI(dSec, 598, 344, 2, '0');
-  break;  
-}
+  switch (mscreen)
+  {
+    case 1:
+      myGLCD.setColor(255, 77, 0);
+      myGLCD.setFont(Ubuntubold);
+      myGLCD.printNumI(Hr, 210, 210, 2, ' ');
+      myGLCD.printNumI(Min, 328, 210, 2, '0');
+      myGLCD.printNumI(dMin, 480, 210, 2 , ' ');
+      myGLCD.printNumI(dSec, 598, 210, 2, '0');
+      break;
+    case 2:
+      myGLCD.setColor(255, 77, 0);
+      myGLCD.setFont(Ubuntubold);
+      myGLCD.printNumI(Hr, 210, 344, 2, ' ');
+      myGLCD.printNumI(Min, 328, 344, 2, '0');
+      myGLCD.printNumI(dMin, 480, 344, 2 , ' ');
+      myGLCD.printNumI(dSec, 598, 344, 2, '0');
+      break;
+  }
 }
 void blankFogfanTime(byte mscreen)
 {
-switch(mscreen)
-{
-  case 1:
-  myGLCD.setFont(Ubuntubold);
-  myGLCD.print("  ", 210, 210);
-  myGLCD.print("  ", 328, 210);
-  myGLCD.print("  ", 480, 210);
-  myGLCD.print("  ", 598, 210);
-  break;
-  case 2:
-  myGLCD.setFont(Ubuntubold);
-  myGLCD.print("  ", 210, 344);
-  myGLCD.print("  ", 328, 344);
-  myGLCD.print("  ", 480, 344);
-  myGLCD.print("  ", 598, 344);
-  break;
-}
+  switch (mscreen)
+  {
+    case 1:
+      myGLCD.setFont(Ubuntubold);
+      myGLCD.print("  ", 210, 210);
+      myGLCD.print("  ", 328, 210);
+      myGLCD.print("  ", 480, 210);
+      myGLCD.print("  ", 598, 210);
+      break;
+    case 2:
+      myGLCD.setFont(Ubuntubold);
+      myGLCD.print("  ", 210, 344);
+      myGLCD.print("  ", 328, 344);
+      myGLCD.print("  ", 480, 344);
+      myGLCD.print("  ", 598, 344);
+      break;
+  }
 }
 void ffFrog(byte dow)
 {
