@@ -215,6 +215,8 @@ float fan;       // = 87.9;                                                     
 float temp1 = 0.0, temp2 = 0.0, temp3 = 0.0, hum1 = 0.0;                                            //
 AlarmID_t alarms[117];                                                                              //
 byte alarmset = 255, hourcount = 0;                                                                 //
+word temp1Hi = 0, temp1Lo = 65535, temp2Hi = 0, temp2Lo = 65535, temp3Hi = 0, temp3Lo = 65535;      //
+word hum1Hi = 0, hum1Lo = 65535;                                                                    //
 #define Sun          0   // binary  1                                                               //  
 #define Mon          1   // binary  2                                                               //
 #define Tue          2   // binary  4                                                               //
@@ -367,10 +369,10 @@ void setup()                                                                    
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 #if DS1307 == 1                                                                                     //
   time_t timeNow1 = rtc.now().unixtime();                                                           //
-  while (second(timeNow1) != 57)                                                                    //
-  { //                                                                                              //
+  while (second(timeNow1) != 57)
+  {
     timeNow1 = rtc.now().unixtime();                                                                //
-  } //                                                                                              //
+  }
   setTime(timeNow1); // set time to Saturday 8:29:00am Jan 1 2011                                   //
   setAlarms();                                                                                      //
 #endif                                                                                              //
@@ -493,6 +495,11 @@ void loop()                                                                     
     humRead(tmphum);                                                                                //
     if (hum1 != tmphum) { //                                                                        //
       hum1 = tmphum;                                                                                //
+      if (hum1 > 28.0 && hum1 < 100.0)
+      {
+        if ((hum1 * 100.0) < hum1Lo) hum1Lo = (hum1 * 100.0);
+        if ((hum1 * 100.0) > hum1Hi) hum1Hi = (hum1 * 100.0);
+      }
 #if debug                                                                                           //
       Serial.print(F("Internal humidity update: "));                                                //
       Serial.println(hum1);                                                                         //
@@ -523,6 +530,11 @@ void loop()                                                                     
     if (temp1 != tmptemp1)                                                                          //
     { //                                                                                            //
       temp1 = tmptemp1;                                                                             //
+      if (temp1 > 28.0 && temp1 < 185.0)
+      {
+        if ((temp1 * 100.0) < temp1Lo) temp1Lo = (temp1 * 100.0);
+        if ((temp1 * 100.0) > temp1Hi) temp1Hi = (temp1 * 100.0);
+      }
 #if debug//                                                                                         // 
       Serial.print(F("Internal temp1 update "));                                                    //
       Serial.println(temp1);                                                                        //
@@ -549,6 +561,11 @@ void loop()                                                                     
     if (temp2 != tmptemp2)                                                                          //
     { //                                                                                            //
       temp2 = tmptemp2;                                                                             //
+      if (temp2 > 28.0 && temp2 < 185.0)
+      {
+        if ((temp2 * 100.0) < temp2Lo) temp2Lo = (temp2 * 100.0);
+        if ((temp2 * 100.0) > temp2Hi) temp2Hi = (temp2 * 100.0);
+      }
 #if debug                                                                                           //
       Serial.print(F("Internal temp2 update "));                                                    //
       Serial.println(temp2);                                                                        //
@@ -574,6 +591,11 @@ void loop()                                                                     
     } //                                                                                            //
     if (temp3 != tmptemp3) { //                                                                     //
       temp3 = tmptemp3;                                                                             //
+      if (temp3 > 28.0 && temp3 < 185.0)
+      {
+        if ((temp3 * 100.0) < temp3Lo) temp3Lo = (temp3 * 100.0);
+        if ((temp3 * 100.0) > temp3Hi) temp3Hi = (temp3 * 100.0);
+      }
 #if debug                                                                                           // 
       Serial.print(F("Internal temp3 update"));                                                     //
       Serial.println(temp3);                                                                        //
@@ -4746,7 +4768,6 @@ void listActiveAlarms()
   Serial.println(buf);
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   Serial.println(F("Fogger\n"));
-  if (!Fog.Enable) Serial.print(F("No active fog alarms!\n"));
   if (Fog.Enable & 0xF0) {
     sprintf(buf, "Fog    1_On %02d:%02d Off %02d:%02d ", Fog.On1Hr, Fog.On1Min, Fog.Dur1Min, Fog.Dur1Sec );
     if (Fog.OnDay & 1 << Sun)
@@ -4779,7 +4800,7 @@ void listActiveAlarms()
     } else strcat(buf, "    ");
     strcat(buf, "\n");
     Serial.print(buf);
-  } else Serial.println();
+  } else Serial.println(F("Fog    1_Off"));
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (Fog.Enable & 0x0F) {
     sprintf(buf, "Fog    2_On %02d:%02d Off %02d:%02d ", Fog.On2Hr, Fog.On2Min, Fog.Dur2Min, Fog.Dur2Sec );
@@ -4813,10 +4834,9 @@ void listActiveAlarms()
     } else strcat(buf, "    ");
     strcat(buf, "\n");
     Serial.println(buf);
-  } else Serial.println();
+  } else Serial.println(F("Fog    2_Off"));
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   Serial.println(F("Misting\n"));
-  if ((!(Mist.Enable)) && (!(Mist2.Enable))) Serial.print(F("No active Mist alarms!\n"));
   if (Mist.Enable & 0xF0) {
     sprintf(buf, "Mist   1_On %02d:%02d Off %02d:%02d ", Mist.On1Hr, Mist.On1Min, Mist.Dur1Min, Mist.Dur1Sec );
     if (Mist.OnDay & 1 << Sun)
@@ -4849,7 +4869,7 @@ void listActiveAlarms()
     } else strcat(buf, "    ");
     strcat(buf, "\n");
     Serial.print(buf);
-  } else Serial.println();
+  } else Serial.println(F("Mist   1_Off"));
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (Mist.Enable & 0x0F) {
     sprintf(buf, "Mist   2_On %02d:%02d Off %02d:%02d ", Mist.On2Hr, Mist.On2Min, Mist.Dur2Min, Mist.Dur2Sec );
@@ -4883,7 +4903,7 @@ void listActiveAlarms()
     } else strcat(buf, "    ");
     strcat(buf, "\n");
     Serial.print(buf);
-  } else Serial.println();
+  } else Serial.println(F("Mist   2_Off"));
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (Mist2.Enable & 0xF0) {
     sprintf(buf, "Mist   3_On %02d:%02d Off %02d:%02d ", Mist2.On1Hr, Mist2.On1Min, Mist2.Dur1Min, Mist2.Dur1Sec );
@@ -4917,7 +4937,7 @@ void listActiveAlarms()
     } else strcat(buf, "    ");
     strcat(buf, "\n");
     Serial.print(buf);
-  } else Serial.println();
+  } else Serial.println(F("Mist   3_Off"));
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (Mist2.Enable & 0x0F) {
     sprintf(buf, "Mist   4_On %02d:%02d Off %02d:%02d ", Mist2.On2Hr, Mist2.On2Min, Mist2.Dur2Min, Mist2.Dur2Sec );
@@ -4951,10 +4971,9 @@ void listActiveAlarms()
     } else strcat(buf, "    ");
     strcat(buf, "\n");
     Serial.println(buf);
-  } else Serial.println();
+  } else Serial.println(F("Mist   4_Off"));
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   Serial.println(F("Fan\n"));
-  if (!Fan.Enable) Serial.print(F("No active fan alarms!\n"));
   if (Fan.Enable & 0xF0) {
     sprintf(buf, "Fan    1_On %02d:%02d Off %02d:%02d ", Fan.On1Hr, Fan.On1Min, Fan.Dur1Min, Fan.Dur1Sec );
     if (Fan.OnDay & 1 << Sun)
@@ -4987,7 +5006,7 @@ void listActiveAlarms()
     } else strcat(buf, "    ");
     strcat(buf, "\n");
     Serial.print(buf);
-  } else Serial.println();
+  } else Serial.println(F("Fan    1_Off"));
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (Fan.Enable & 0x0F) {
     sprintf(buf, "Fan    2_On %02d:%02d Off %02d:%02d ", Fan.On2Hr, Fan.On2Min, Fan.Dur2Min, Fan.Dur2Sec );
@@ -5021,5 +5040,36 @@ void listActiveAlarms()
     } else strcat(buf, "    ");
     strcat(buf, "\n");
     Serial.println(buf);
-  } else Serial.println();
+  } else Serial.println(F("Fan    2_Off"));
+  Serial.println(F("Hi/Lo\n"));
+  char outstr1[10];
+  char outstr2[10];
+  if (temp1Hi != 0 || temp1Lo != 65535)
+  {
+    dtostrf(temp1Hi / 100.0, 5, 2, outstr1);
+    dtostrf(temp1Lo / 100.0, 5, 2, outstr2);
+    sprintf(buf, "Temp1 Lo:%s Hi:%s\n", outstr1, outstr2 );
+    Serial.println(buf);
+  }
+  if (temp2Hi != 0 || temp2Lo != 65535)
+  {
+    dtostrf(temp2Hi / 100.0, 5, 2, outstr1);
+    dtostrf(temp2Lo / 100.0, 5, 2, outstr2);
+    sprintf(buf, "Temp2 Lo:%s Hi:%s\n", outstr1, outstr2);
+    Serial.println(buf);
+  }
+  if (temp3Hi != 0 || temp3Lo != 65535)
+  {
+    dtostrf(temp3Hi / 100.0, 5, 2, outstr1);
+    dtostrf(temp3Lo / 100.0, 5, 2, outstr2);
+    sprintf(buf, "Temp3 Lo:%s Hi:%s\n", outstr1, outstr2);
+    Serial.println(buf);
+  }
+  if (hum1Hi != 0 || hum1Lo != 65535)
+  {
+    dtostrf(hum1Hi / 100.0, 5, 2, outstr1);
+    dtostrf(hum1Lo / 100.0, 5, 2, outstr2);
+    sprintf(buf, "Hum 1 Lo:%s Hi:%s\n", outstr1, outstr2);
+    Serial.println(buf);
+  }
 }
