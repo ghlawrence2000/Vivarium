@@ -1,13 +1,12 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-// Vivarium Management Controller w/ 7" touchscreen Interface                                       //
-// Written and coded by David Sease, aka Bigsease30 and ghlawrence2000 on arduino.cc!               //
-// Much code was swiped, modified, and integrated or otherwise inspired from other public works     //
-//                                                                                                  //
-// All code is public domain, feel free to use, abuse, edit, and share                              //
-// Written for Arduino Mega 2560                                                                    //
+//                 Vivarium Management Controller w/ 7" touchscreen Interface                       //
+//   The code that was not swiped, modified, integrated or otherwise inspired by public works was   //
+//              written and coded by Graham Lawrence aka ghlawrence2000 on Arduino.cc               //
+//                    everything else was sourced by David Sease, aka Bigsease30                    //
+//                                 Written for Arduino Mega 2560                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                     VERSION:  15/02/15 23:15GMT                                  //
-//                                        Development Version 23                                    //
+//                                     VERSION:  18/02/15 20:35GMT                                  //
+//                                    Development Version 25_Beta 1                                 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         CODE ORDER:                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,7 +92,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Decare Libraries                                                //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <avr/pgmspace.h>
 #include <Wire.h>                  // needed by tons of stuff  <== Davids excellent description!!   //
 #include <EEPROM.h>                // used to store and retrieve settings from memory               //
 #include <UTFT.h>                  // used to interface with the TFT display                        //
@@ -112,11 +110,11 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 #define DS1307   1 // <====== 1 for DS1307, 0 for Software                                          //
 #define fastest  1 // <====== 1 = MAX speed all screens in own page / 0 = 2 Screens share a page... //
-#define debug    0 // <====== 1 = Serial output enabled                                             //
+#define debug    1 // <====== 1 = Serial output enabled                                             //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                           Initiate Screen, Touch, Imaging and Fonts                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-UTFT myGLCD(CTE70CPLD, 38, 39, 40, 41); // start up an instance of the TFT screen                   //
+UTFT myGLCD(CPLD, 38, 39, 40, 41); // start up an instance of the TFT screen                        //
 UTouch  myTouch( 6, 5, 4, 3, 2);        // start up an instance of for touch                        //
 UTFT_SdRaw myFiles(&myGLCD);            // start up an instance to read images from SD              //
 SdFat sd;                               // start up as instance of SD                               //
@@ -124,8 +122,6 @@ extern uint8_t SmallFont[];                                                     
 extern uint8_t Sinclair_S[];                                                                        //
 extern uint8_t arial_bold[];                                                                        //
 extern uint8_t Ubuntubold[];                                                                        //
-extern uint8_t TinyFont[];                                                                          //
-extern uint8_t arial_bold[];                                                                  //
 extern unsigned int frog[0x654];                                                                    //
 extern unsigned int smfrog[0x3B1];                                                                  //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,6 +213,9 @@ float heater;    // = 35.9;                                                     
 float fan;       // = 87.9;                                                                         //
 float temp1 = 0.0, temp2 = 0.0, temp3 = 0.0, hum1 = 0.0;                                            //
 AlarmID_t alarms[117];                                                                              //
+byte heatOn = 0, fanOn = 0;                                                                         //
+float prevlowTemp = 0.00;                                                                           //
+float prevhiTemp = 0.00;                                                                            //
 byte alarmset = 255, hourcount = 0;                                                                 //
 word temp1Hi = 0, temp1Lo = 65535, temp2Hi = 0, temp2Lo = 65535, temp3Hi = 0, temp3Lo = 65535;      //
 word hum1Hi = 0, hum1Lo = 65535;                                                                    //
@@ -372,10 +371,10 @@ void setup()                                                                    
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 #if DS1307 == 1                                                                                     //
   time_t timeNow1 = rtc.now().unixtime();                                                           //
-  while (second(timeNow1) != 57)
-  {
+  while (second(timeNow1) != 57)                                                                    //
+  { //                                                                                              //
     timeNow1 = rtc.now().unixtime();                                                                //
-  }
+  } //                                                                                              //
   setTime(timeNow1); // set time to Saturday 8:29:00am Jan 1 2011                                   //
   setAlarms();                                                                                      //
 #endif                                                                                              //
@@ -405,17 +404,17 @@ void setup()                                                                    
   unsigned long performance = millis();                                                             //
 #endif                                                                                              //
   // boot up logo                                                                                   //
-  myFiles.loadcpld(230, 40, 378, 268, "Logo.raw", 0, 3);  // <==== Write to writepage 0             //
-  myFiles.loadcpld(340, 360, 149, 47, "Copy.raw", 0, 3);  // <==== Write to writepage 0             //
+  myFiles.loadcpld(230, 40, 378, 268, "Logo.raw", 0, 4);  // <==== Write to writepage 0             //
+  myFiles.loadcpld(340, 360, 149, 47, "Copy.raw", 0, 4);  // <==== Write to writepage 0             //
   myGLCD.setDisplayPage(0);                               // <==== Display writepage 0              //
-  myFiles.loadcpld(0, 0, 800, 480, "1Home.raw", 1, 1);                                              //
-  myFiles.loadcpld(0, 0, 800, 480, "2Lights.raw", 2, 1);                                            //
-  myFiles.loadcpld(0, 0, 800, 480, "3Temp.raw", 3, 1);                                              //
-  myFiles.loadcpld(0, 0, 800, 480, "46SchedG.raw", 4, 1); //Fan/Fog to save video pages...          //
-  myFiles.loadcpld(0, 0, 800, 480, "5MistG.raw", 7, 1);   //New Mist...                             //
+  myFiles.loadcpld(0, 0, 800, 480, "1Home.raw", 1, 2);                                              //
+  myFiles.loadcpld(0, 0, 800, 480, "2Lights.raw", 2, 2);                                            //
+  myFiles.loadcpld(0, 0, 800, 480, "3Temp.raw", 3, 2);                                              //
+  myFiles.loadcpld(0, 0, 800, 480, "46SchedG.raw", 4, 2); //Fan/Fog to save video pages...          //
+  myFiles.loadcpld(0, 0, 800, 480, "5MistG.raw", 7, 2);   //New Mist...                             //
 #if fastest                                                                                         //
-  myFiles.loadcpld(0, 0, 800, 480, "7Clock.raw", 5, 1);                                             //
-  myFiles.loadcpld(0, 0, 800, 480, "8Screen.raw", 6, 1);                                            //
+  myFiles.loadcpld(0, 0, 800, 480, "7Clock.raw", 5, 2);                                             //
+  myFiles.loadcpld(0, 0, 800, 480, "8Screen.raw", 6, 2);                                            //
 #endif                                                                                              //
   // display home screen                                                                            //
   screenHome();                                                                                     //
@@ -498,11 +497,11 @@ void loop()                                                                     
     humRead(tmphum);                                                                                //
     if (hum1 != tmphum) { //                                                                        //
       hum1 = tmphum;                                                                                //
-      if (hum1 > 28.0 && hum1 < 100.0)
-      {
-        if ((hum1 * 100.0) < hum1Lo) hum1Lo = (hum1 * 100.0);
-        if ((hum1 * 100.0) > hum1Hi) hum1Hi = (hum1 * 100.0);
-      }
+      if (hum1 > 28.0 && hum1 < 100.0)                                                              //
+      { //                                                                                          //
+        if ((hum1 * 100.0) < hum1Lo) hum1Lo = (hum1 * 100.0);                                       //
+        if ((hum1 * 100.0) > hum1Hi) hum1Hi = (hum1 * 100.0);                                       //
+      } //                                                                                          //
 #if debug                                                                                           //
       Serial.print(F("Internal humidity update: "));                                                //
       Serial.println(hum1);                                                                         //
@@ -533,11 +532,11 @@ void loop()                                                                     
     if (temp1 != tmptemp1)                                                                          //
     { //                                                                                            //
       temp1 = tmptemp1;                                                                             //
-      if (temp1 > 28.0 && temp1 < 185.0)
-      {
-        if ((temp1 * 100.0) < temp1Lo) temp1Lo = (temp1 * 100.0);
-        if ((temp1 * 100.0) > temp1Hi) temp1Hi = (temp1 * 100.0);
-      }
+      if (temp1 > 28.0 && temp1 < 185.0)                                                            //
+      { //                                                                                          //
+        if ((temp1 * 100.0) < temp1Lo) temp1Lo = (temp1 * 100.0);                                   //
+        if ((temp1 * 100.0) > temp1Hi) temp1Hi = (temp1 * 100.0);                                   //
+      } //                                                                                          //
 #if debug//                                                                                         // 
       Serial.print(F("Internal temp1 update "));                                                    //
       Serial.println(temp1);                                                                        //
@@ -564,11 +563,11 @@ void loop()                                                                     
     if (temp2 != tmptemp2)                                                                          //
     { //                                                                                            //
       temp2 = tmptemp2;                                                                             //
-      if (temp2 > 28.0 && temp2 < 185.0)
-      {
-        if ((temp2 * 100.0) < temp2Lo) temp2Lo = (temp2 * 100.0);
-        if ((temp2 * 100.0) > temp2Hi) temp2Hi = (temp2 * 100.0);
-      }
+      if (temp2 > 28.0 && temp2 < 185.0)                                                            //
+      { //                                                                                          //
+        if ((temp2 * 100.0) < temp2Lo) temp2Lo = (temp2 * 100.0);                                   //
+        if ((temp2 * 100.0) > temp2Hi) temp2Hi = (temp2 * 100.0);                                   //
+      } //                                                                                          //
 #if debug                                                                                           //
       Serial.print(F("Internal temp2 update "));                                                    //
       Serial.println(temp2);                                                                        //
@@ -594,11 +593,11 @@ void loop()                                                                     
     } //                                                                                            //
     if (temp3 != tmptemp3) { //                                                                     //
       temp3 = tmptemp3;                                                                             //
-      if (temp3 > 28.0 && temp3 < 185.0)
-      {
-        if ((temp3 * 100.0) < temp3Lo) temp3Lo = (temp3 * 100.0);
-        if ((temp3 * 100.0) > temp3Hi) temp3Hi = (temp3 * 100.0);
-      }
+      if (temp3 > 28.0 && temp3 < 185.0)                                                            //
+      { //                                                                                          //
+        if ((temp3 * 100.0) < temp3Lo) temp3Lo = (temp3 * 100.0);                                   //
+        if ((temp3 * 100.0) > temp3Hi) temp3Hi = (temp3 * 100.0);                                   //
+      } //                                                                                          //
 #if debug                                                                                           // 
       Serial.print(F("Internal temp3 update"));                                                     //
       Serial.println(temp3);                                                                        //
@@ -624,6 +623,8 @@ void loop()                                                                     
     } //                                                                                            //
   } //                                                                                              //
   Alarm.delay(0);                                                                                   //
+  lowTemp();                                                                                        //
+  hiTemp();                                                                                         //
   procRelays(Relay);  // Display active relay icons on 'Home' Page                                  //
 } //                                                                                                //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1119,6 +1120,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         TouchRepeatDelay = tmpTouchRepeatDelay;
         if (tempFan != fan) {
           EEPROM.writeFloat(9, tempFan);
+          prevhiTemp = 0;
           fan = tempFan;
 #if debug
           Serial.println(F("Fan -> EEPROM"));
@@ -1126,6 +1128,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         }
         if (tempHeater != heater) {
           EEPROM.writeFloat(5, tempHeater);
+          prevlowTemp = 0;
           heater = tempHeater;
 #if debug
           Serial.println(F("Heater -> EEPROM"));
@@ -3265,10 +3268,6 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           Serial.println(F("Time Set"));
 #endif
           time_t xo = makeTime(tmpRTC);
-          //      rtc.adjust(pctime); // Sync Arduino clock to the time received on the serial port
-          //      setTime(pctime);
-          //      setAlarms();
-
           rtc.adjust(xo);
           setTime(xo);
           setAlarms();
@@ -3952,14 +3951,6 @@ void humRead(float & hum1a)
 ////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////    Relay handlers    /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
-void relayOff(byte flag)
-{
-  Relay |= (1 << flag);
-}
-void relayOn(byte flag)
-{
-  Relay &= ~(1 << flag);
-}
 
 void procRelays(byte relay)
 {
@@ -4015,6 +4006,7 @@ void procRelays(byte relay)
       myFiles.loadcpld(732, 418, 22, 22, relays[0], 1, 16);
     }
     prevRelay = relay;
+    testRelays();
   }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -4026,665 +4018,966 @@ void setAlarms()
   {
 #if debug
     Serial.println(F("Alarms set"));
-    digitalClockDisplay();
-#endif
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    alarms[0] = Alarm.alarmRepeat(Light.On1Hr, Light.On1Min, 0, Lights1On);  //
-    alarms[1] = Alarm.alarmRepeat(Light.Dur1Min, Light.Dur1Sec, 0, Lights1Off); //
-    alarms[2] = Alarm.alarmRepeat(Light.On2Hr, Light.On2Min, 0, Lights2On);  //
-    alarms[3] = Alarm.alarmRepeat(Light.Dur2Min, Light.Dur2Sec, 0, Lights2Off); //
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Fog.Enable & 0xF0) {
-      if (Fog.OnDay & 1 << Sun)
-      {
-        alarms[4] = Alarm.alarmRepeat(dowSunday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[5] = Alarm.alarmRepeat(dowSunday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Mon)
-      {
-        alarms[6] = Alarm.alarmRepeat(dowMonday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[7] = Alarm.alarmRepeat(dowMonday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Tue)
-      {
-        alarms[8] = Alarm.alarmRepeat(dowTuesday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[9] = Alarm.alarmRepeat(dowTuesday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Wed)
-      {
-        alarms[10] = Alarm.alarmRepeat(dowWednesday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[11] = Alarm.alarmRepeat(dowWednesday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Thu)
-      {
-        alarms[12] = Alarm.alarmRepeat(dowThursday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[13] = Alarm.alarmRepeat(dowThursday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Fri)
-      {
-        alarms[14] = Alarm.alarmRepeat(dowFriday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[15] = Alarm.alarmRepeat(dowFriday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Sat)
-      {
-        alarms[16] = Alarm.alarmRepeat(dowSaturday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[17] = Alarm.alarmRepeat(dowSaturday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Fog.Enable & 0x0F) {
-      if (Fog.OnDay2 & 1 << Sun)
-      {
-        alarms[18] = Alarm.alarmRepeat(dowSunday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[19] = Alarm.alarmRepeat(dowSunday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Mon)
-      {
-        alarms[20] = Alarm.alarmRepeat(dowMonday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[21] = Alarm.alarmRepeat(dowMonday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Tue)
-      {
-        alarms[22] = Alarm.alarmRepeat(dowTuesday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[23] = Alarm.alarmRepeat(dowTuesday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Wed)
-      {
-        alarms[24] = Alarm.alarmRepeat(dowWednesday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[25] = Alarm.alarmRepeat(dowWednesday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Thu)
-      {
-        alarms[26] = Alarm.alarmRepeat(dowThursday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[27] = Alarm.alarmRepeat(dowThursday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Fri)
-      {
-        alarms[28] = Alarm.alarmRepeat(dowFriday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[29] = Alarm.alarmRepeat(dowFriday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Sat)
-      {
-        alarms[30] = Alarm.alarmRepeat(dowSaturday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[31] = Alarm.alarmRepeat(dowSaturday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Fan.Enable & 0xF0) {
-      if (Fan.OnDay & 1 << Sun)
-      {
-        alarms[32] = Alarm.alarmRepeat(dowSunday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[33] = Alarm.alarmRepeat(dowSunday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Mon)
-      {
-        alarms[34] = Alarm.alarmRepeat(dowMonday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[35] = Alarm.alarmRepeat(dowMonday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-
-      if (Fan.OnDay & 1 << Tue)
-      {
-        alarms[36] = Alarm.alarmRepeat(dowTuesday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[37] = Alarm.alarmRepeat(dowTuesday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Wed)
-      {
-        alarms[38] = Alarm.alarmRepeat(dowWednesday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[39] = Alarm.alarmRepeat(dowWednesday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Thu)
-      {
-        alarms[40] = Alarm.alarmRepeat(dowThursday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[41] = Alarm.alarmRepeat(dowThursday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Fri)
-      {
-        alarms[42] = Alarm.alarmRepeat(dowFriday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[43] = Alarm.alarmRepeat(dowFriday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Sat)
-      {
-        alarms[44] = Alarm.alarmRepeat(dowSaturday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[45] = Alarm.alarmRepeat(dowSaturday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Fan.Enable & 0x0F) {
-      if (Fan.OnDay2 & 1 << Sun)
-      {
-        alarms[46] = Alarm.alarmRepeat(dowSunday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[47] = Alarm.alarmRepeat(dowSunday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Mon)
-      {
-        alarms[48] = Alarm.alarmRepeat(dowMonday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[49] = Alarm.alarmRepeat(dowMonday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Tue)
-      {
-        alarms[50] = Alarm.alarmRepeat(dowTuesday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[51] = Alarm.alarmRepeat(dowTuesday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Wed)
-      {
-        alarms[52] = Alarm.alarmRepeat(dowWednesday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[53] = Alarm.alarmRepeat(dowWednesday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Thu)
-      {
-        alarms[54] = Alarm.alarmRepeat(dowThursday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[55] = Alarm.alarmRepeat(dowThursday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Fri)
-      {
-        alarms[56] = Alarm.alarmRepeat(dowFriday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[57] = Alarm.alarmRepeat(dowFriday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Sat)
-      {
-        alarms[58] = Alarm.alarmRepeat(dowSaturday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[59] = Alarm.alarmRepeat(dowSaturday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Mist.Enable & 0xF0) {
-      if (Mist.OnDay & 1 << Sun)
-      {
-        alarms[60] = Alarm.alarmRepeat(dowSunday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[61] = Alarm.alarmRepeat(dowSunday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Mon)
-      {
-        alarms[62] = Alarm.alarmRepeat(dowMonday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[63] = Alarm.alarmRepeat(dowMonday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Tue)
-      {
-        alarms[64] = Alarm.alarmRepeat(dowTuesday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[65] = Alarm.alarmRepeat(dowTuesday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Wed)
-      {
-        alarms[66] = Alarm.alarmRepeat(dowWednesday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[67] = Alarm.alarmRepeat(dowWednesday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Thu)
-      {
-        alarms[68] = Alarm.alarmRepeat(dowThursday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[69] = Alarm.alarmRepeat(dowThursday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Fri)
-      {
-        alarms[70] = Alarm.alarmRepeat(dowFriday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[71] = Alarm.alarmRepeat(dowFriday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Sat)
-      {
-        alarms[72] = Alarm.alarmRepeat(dowSaturday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[73] = Alarm.alarmRepeat(dowSaturday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Mist.Enable & 0x0F) {
-      if (Mist.OnDay2 & 1 << Sun)
-      {
-        alarms[74] = Alarm.alarmRepeat(dowSunday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[75] = Alarm.alarmRepeat(dowSunday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Mon)
-      {
-        alarms[76] = Alarm.alarmRepeat(dowMonday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[77] = Alarm.alarmRepeat(dowMonday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Tue)
-      {
-        alarms[78] = Alarm.alarmRepeat(dowTuesday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[79] = Alarm.alarmRepeat(dowTuesday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Wed)
-      {
-        alarms[80] = Alarm.alarmRepeat(dowWednesday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[81] = Alarm.alarmRepeat(dowWednesday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Thu)
-      {
-        alarms[82] = Alarm.alarmRepeat(dowThursday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[83] = Alarm.alarmRepeat(dowThursday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Fri)
-      {
-        alarms[84] = Alarm.alarmRepeat(dowFriday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[85] = Alarm.alarmRepeat(dowFriday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Sat)
-      {
-        alarms[86] = Alarm.alarmRepeat(dowSaturday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[87] = Alarm.alarmRepeat(dowSaturday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Mist2.Enable & 0xF0) {
-      if (Mist2.OnDay & 1 << Sun)
-      {
-        alarms[88] = Alarm.alarmRepeat(dowSunday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[89] = Alarm.alarmRepeat(dowSunday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Mon)
-      {
-        alarms[90] = Alarm.alarmRepeat(dowMonday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[91] = Alarm.alarmRepeat(dowMonday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Tue)
-      {
-        alarms[92] = Alarm.alarmRepeat(dowTuesday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[93] = Alarm.alarmRepeat(dowTuesday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Wed)
-      {
-        alarms[94] = Alarm.alarmRepeat(dowWednesday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[95] = Alarm.alarmRepeat(dowWednesday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Thu)
-      {
-        alarms[96] = Alarm.alarmRepeat(dowThursday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[97] = Alarm.alarmRepeat(dowThursday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Fri)
-      {
-        alarms[98] = Alarm.alarmRepeat(dowFriday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[99] = Alarm.alarmRepeat(dowFriday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Sat)
-      {
-        alarms[100] = Alarm.alarmRepeat(dowSaturday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[101] = Alarm.alarmRepeat(dowSaturday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Mist2.Enable & 0x0F) {
-      if (Mist2.OnDay2 & 1 << Sun)
-      {
-        alarms[102] = Alarm.alarmRepeat(dowSunday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[103] = Alarm.alarmRepeat(dowSunday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Mon)
-      {
-        alarms[104] = Alarm.alarmRepeat(dowMonday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[105] = Alarm.alarmRepeat(dowMonday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Tue)
-      {
-        alarms[106] = Alarm.alarmRepeat(dowTuesday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[107] = Alarm.alarmRepeat(dowTuesday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Wed)
-      {
-        alarms[108] = Alarm.alarmRepeat(dowWednesday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[109] = Alarm.alarmRepeat(dowWednesday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Thu)
-      {
-        alarms[110] = Alarm.alarmRepeat(dowThursday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[111] = Alarm.alarmRepeat(dowThursday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Fri)
-      {
-        alarms[112] = Alarm.alarmRepeat(dowFriday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[113] = Alarm.alarmRepeat(dowFriday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Sat)
-      {
-        alarms[114] = Alarm.alarmRepeat(dowSaturday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[115] = Alarm.alarmRepeat(dowSaturday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    alarms[116] = Alarm.timerRepeat(15, Repeats);          // timer for every 15 seconds
-#if debug
-    for (byte q = 0; q < 117; q++)
-    {
-      Serial.print(F("Alarm element "));
-      Serial.print(q);
-      Serial.print(' ');
-      Serial.println(alarms[q]);
-    }
+    //    digitalClockDisplay();
 #endif
     alarmset = 0;
   }
   else
   {
-#if debug
-    Serial.println(F("Reset alarms here"));
-    for ( byte q = 0; q < 117; q++)
+    for ( byte q = 0; q < 116; q++)
     {
       Alarm.free(alarms[q]);
       Alarm.disable(alarms[q]);
       alarms[q] = 255;
     }
-#endif
-    alarms[0] = Alarm.alarmRepeat(Light.On1Hr, Light.On1Min, 0, Lights1On);  //
-    alarms[1] = Alarm.alarmRepeat(Light.Dur1Min, Light.Dur1Sec, 0, Lights1Off); //
-    alarms[2] = Alarm.alarmRepeat(Light.On2Hr, Light.On2Min, 0, Lights2On);  //
-    alarms[3] = Alarm.alarmRepeat(Light.Dur2Min, Light.Dur2Sec, 0, Lights2Off); //
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Fog.Enable & 0xF0) {
-      if (Fog.OnDay & 1 << Sun)
-      {
-        alarms[4] = Alarm.alarmRepeat(dowSunday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[5] = Alarm.alarmRepeat(dowSunday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Mon)
-      {
-        alarms[6] = Alarm.alarmRepeat(dowMonday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[7] = Alarm.alarmRepeat(dowMonday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Tue)
-      {
-        alarms[8] = Alarm.alarmRepeat(dowTuesday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[9] = Alarm.alarmRepeat(dowTuesday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Wed)
-      {
-        alarms[10] = Alarm.alarmRepeat(dowWednesday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[11] = Alarm.alarmRepeat(dowWednesday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Thu)
-      {
-        alarms[12] = Alarm.alarmRepeat(dowThursday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[13] = Alarm.alarmRepeat(dowThursday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Fri)
-      {
-        alarms[14] = Alarm.alarmRepeat(dowFriday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[15] = Alarm.alarmRepeat(dowFriday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay & 1 << Sat)
-      {
-        alarms[16] = Alarm.alarmRepeat(dowSaturday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
-        alarms[17] = Alarm.alarmRepeat(dowSaturday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Fog.Enable & 0x0F) {
-      if (Fog.OnDay2 & 1 << Sun)
-      {
-        alarms[18] = Alarm.alarmRepeat(dowSunday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[19] = Alarm.alarmRepeat(dowSunday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Mon)
-      {
-        alarms[20] = Alarm.alarmRepeat(dowMonday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[21] = Alarm.alarmRepeat(dowMonday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Tue)
-      {
-        alarms[22] = Alarm.alarmRepeat(dowTuesday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[23] = Alarm.alarmRepeat(dowTuesday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Wed)
-      {
-        alarms[24] = Alarm.alarmRepeat(dowWednesday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[25] = Alarm.alarmRepeat(dowWednesday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Thu)
-      {
-        alarms[26] = Alarm.alarmRepeat(dowThursday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[27] = Alarm.alarmRepeat(dowThursday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Fri)
-      {
-        alarms[28] = Alarm.alarmRepeat(dowFriday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[29] = Alarm.alarmRepeat(dowFriday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-      if (Fog.OnDay2 & 1 << Sat)
-      {
-        alarms[30] = Alarm.alarmRepeat(dowSaturday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
-        alarms[31] = Alarm.alarmRepeat(dowSaturday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Fan.Enable & 0xF0) {
-      if (Fan.OnDay & 1 << Sun)
-      {
-        alarms[32] = Alarm.alarmRepeat(dowSunday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[33] = Alarm.alarmRepeat(dowSunday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Mon)
-      {
-        alarms[34] = Alarm.alarmRepeat(dowMonday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[35] = Alarm.alarmRepeat(dowMonday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-
-      if (Fan.OnDay & 1 << Tue)
-      {
-        alarms[36] = Alarm.alarmRepeat(dowTuesday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[37] = Alarm.alarmRepeat(dowTuesday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Wed)
-      {
-        alarms[38] = Alarm.alarmRepeat(dowWednesday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[39] = Alarm.alarmRepeat(dowWednesday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Thu)
-      {
-        alarms[40] = Alarm.alarmRepeat(dowThursday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[41] = Alarm.alarmRepeat(dowThursday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Fri)
-      {
-        alarms[42] = Alarm.alarmRepeat(dowFriday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[43] = Alarm.alarmRepeat(dowFriday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay & 1 << Sat)
-      {
-        alarms[44] = Alarm.alarmRepeat(dowSaturday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
-        alarms[45] = Alarm.alarmRepeat(dowSaturday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Fan.Enable & 0x0F) {
-      if (Fan.OnDay2 & 1 << Sun)
-      {
-        alarms[46] = Alarm.alarmRepeat(dowSunday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[47] = Alarm.alarmRepeat(dowSunday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Mon)
-      {
-        alarms[48] = Alarm.alarmRepeat(dowMonday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[49] = Alarm.alarmRepeat(dowMonday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Tue)
-      {
-        alarms[50] = Alarm.alarmRepeat(dowTuesday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[51] = Alarm.alarmRepeat(dowTuesday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Wed)
-      {
-        alarms[52] = Alarm.alarmRepeat(dowWednesday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[53] = Alarm.alarmRepeat(dowWednesday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Thu)
-      {
-        alarms[54] = Alarm.alarmRepeat(dowThursday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[55] = Alarm.alarmRepeat(dowThursday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Fri)
-      {
-        alarms[56] = Alarm.alarmRepeat(dowFriday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[57] = Alarm.alarmRepeat(dowFriday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-      if (Fan.OnDay2 & 1 << Sat)
-      {
-        alarms[58] = Alarm.alarmRepeat(dowSaturday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
-        alarms[59] = Alarm.alarmRepeat(dowSaturday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Mist.Enable & 0xF0) {
-      if (Mist.OnDay & 1 << Sun)
-      {
-        alarms[60] = Alarm.alarmRepeat(dowSunday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[61] = Alarm.alarmRepeat(dowSunday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Mon)
-      {
-        alarms[62] = Alarm.alarmRepeat(dowMonday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[63] = Alarm.alarmRepeat(dowMonday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Tue)
-      {
-        alarms[64] = Alarm.alarmRepeat(dowTuesday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[65] = Alarm.alarmRepeat(dowTuesday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Wed)
-      {
-        alarms[66] = Alarm.alarmRepeat(dowWednesday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[67] = Alarm.alarmRepeat(dowWednesday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Thu)
-      {
-        alarms[68] = Alarm.alarmRepeat(dowThursday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[69] = Alarm.alarmRepeat(dowThursday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Fri)
-      {
-        alarms[70] = Alarm.alarmRepeat(dowFriday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[71] = Alarm.alarmRepeat(dowFriday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay & 1 << Sat)
-      {
-        alarms[72] = Alarm.alarmRepeat(dowSaturday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
-        alarms[73] = Alarm.alarmRepeat(dowSaturday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Mist.Enable & 0x0F) {
-      if (Mist.OnDay2 & 1 << Sun)
-      {
-        alarms[74] = Alarm.alarmRepeat(dowSunday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[75] = Alarm.alarmRepeat(dowSunday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Mon)
-      {
-        alarms[76] = Alarm.alarmRepeat(dowMonday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[77] = Alarm.alarmRepeat(dowMonday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Tue)
-      {
-        alarms[78] = Alarm.alarmRepeat(dowTuesday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[79] = Alarm.alarmRepeat(dowTuesday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Wed)
-      {
-        alarms[80] = Alarm.alarmRepeat(dowWednesday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[81] = Alarm.alarmRepeat(dowWednesday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Thu)
-      {
-        alarms[82] = Alarm.alarmRepeat(dowThursday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[83] = Alarm.alarmRepeat(dowThursday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Fri)
-      {
-        alarms[84] = Alarm.alarmRepeat(dowFriday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[85] = Alarm.alarmRepeat(dowFriday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist.OnDay2 & 1 << Sat)
-      {
-        alarms[86] = Alarm.alarmRepeat(dowSaturday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
-        alarms[87] = Alarm.alarmRepeat(dowSaturday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Mist2.Enable & 0xF0) {
-      if (Mist2.OnDay & 1 << Sun)
-      {
-        alarms[88] = Alarm.alarmRepeat(dowSunday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[89] = Alarm.alarmRepeat(dowSunday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Mon)
-      {
-        alarms[90] = Alarm.alarmRepeat(dowMonday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[91] = Alarm.alarmRepeat(dowMonday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Tue)
-      {
-        alarms[92] = Alarm.alarmRepeat(dowTuesday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[93] = Alarm.alarmRepeat(dowTuesday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Wed)
-      {
-        alarms[94] = Alarm.alarmRepeat(dowWednesday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[95] = Alarm.alarmRepeat(dowWednesday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Thu)
-      {
-        alarms[96] = Alarm.alarmRepeat(dowThursday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[97] = Alarm.alarmRepeat(dowThursday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Fri)
-      {
-        alarms[98] = Alarm.alarmRepeat(dowFriday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[99] = Alarm.alarmRepeat(dowFriday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay & 1 << Sat)
-      {
-        alarms[100] = Alarm.alarmRepeat(dowSaturday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
-        alarms[101] = Alarm.alarmRepeat(dowSaturday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (Mist2.Enable & 0x0F) {
-      if (Mist2.OnDay2 & 1 << Sun)
-      {
-        alarms[102] = Alarm.alarmRepeat(dowSunday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[103] = Alarm.alarmRepeat(dowSunday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Mon)
-      {
-        alarms[104] = Alarm.alarmRepeat(dowMonday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[105] = Alarm.alarmRepeat(dowMonday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Tue)
-      {
-        alarms[106] = Alarm.alarmRepeat(dowTuesday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[107] = Alarm.alarmRepeat(dowTuesday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Wed)
-      {
-        alarms[108] = Alarm.alarmRepeat(dowWednesday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[109] = Alarm.alarmRepeat(dowWednesday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Thu)
-      {
-        alarms[110] = Alarm.alarmRepeat(dowThursday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[111] = Alarm.alarmRepeat(dowThursday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Fri)
-      {
-        alarms[112] = Alarm.alarmRepeat(dowFriday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[113] = Alarm.alarmRepeat(dowFriday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-      if (Mist2.OnDay2 & 1 << Sat)
-      {
-        alarms[114] = Alarm.alarmRepeat(dowSaturday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
-        alarms[115] = Alarm.alarmRepeat(dowSaturday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
-      }
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //alarms[116] = Alarm.timerRepeat(15, Repeats);          // timer for every 15 seconds
-#if debug
-    for (byte q = 0; q < 117; q++)
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  alarms[0] = Alarm.alarmRepeat(Light.On1Hr, Light.On1Min, 0, Lights1On);                                //
+  alarms[1] = Alarm.alarmRepeat(Light.Dur1Min, Light.Dur1Sec, 0, Lights1Off);                            //
+  alarms[2] = Alarm.alarmRepeat(Light.On2Hr, Light.On2Min, 0, Lights2On);                                //
+  alarms[3] = Alarm.alarmRepeat(Light.Dur2Min, Light.Dur2Sec, 0, Lights2Off);                            //
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Fog.Enable & 0xF0) {
+    if (Fog.OnDay & 1 << Sun)
     {
-      Serial.print("alarm element ");
-      Serial.print(q);
-      Serial.print(' ');
-      Serial.println(alarms[q]);
+      alarms[4] = Alarm.alarmRepeat(dowSunday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
+      alarms[5] = Alarm.alarmRepeat(dowSunday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
     }
+    if (Fog.OnDay & 1 << Mon)
+    {
+      alarms[6] = Alarm.alarmRepeat(dowMonday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
+      alarms[7] = Alarm.alarmRepeat(dowMonday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay & 1 << Tue)
+    {
+      alarms[8] = Alarm.alarmRepeat(dowTuesday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
+      alarms[9] = Alarm.alarmRepeat(dowTuesday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay & 1 << Wed)
+    {
+      alarms[10] = Alarm.alarmRepeat(dowWednesday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
+      alarms[11] = Alarm.alarmRepeat(dowWednesday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay & 1 << Thu)
+    {
+      alarms[12] = Alarm.alarmRepeat(dowThursday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
+      alarms[13] = Alarm.alarmRepeat(dowThursday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay & 1 << Fri)
+    {
+      alarms[14] = Alarm.alarmRepeat(dowFriday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
+      alarms[15] = Alarm.alarmRepeat(dowFriday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay & 1 << Sat)
+    {
+      alarms[16] = Alarm.alarmRepeat(dowSaturday, Fog.On1Hr, Fog.On1Min, 0, FogOn); //
+      alarms[17] = Alarm.alarmRepeat(dowSaturday, Fog.Dur1Min, Fog.Dur1Sec, 0, FogOff); //
+    }
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Fog.Enable & 0x0F) {
+    if (Fog.OnDay2 & 1 << Sun)
+    {
+      alarms[18] = Alarm.alarmRepeat(dowSunday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
+      alarms[19] = Alarm.alarmRepeat(dowSunday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay2 & 1 << Mon)
+    {
+      alarms[20] = Alarm.alarmRepeat(dowMonday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
+      alarms[21] = Alarm.alarmRepeat(dowMonday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay2 & 1 << Tue)
+    {
+      alarms[22] = Alarm.alarmRepeat(dowTuesday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
+      alarms[23] = Alarm.alarmRepeat(dowTuesday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay2 & 1 << Wed)
+    {
+      alarms[24] = Alarm.alarmRepeat(dowWednesday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
+      alarms[25] = Alarm.alarmRepeat(dowWednesday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay2 & 1 << Thu)
+    {
+      alarms[26] = Alarm.alarmRepeat(dowThursday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
+      alarms[27] = Alarm.alarmRepeat(dowThursday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay2 & 1 << Fri)
+    {
+      alarms[28] = Alarm.alarmRepeat(dowFriday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
+      alarms[29] = Alarm.alarmRepeat(dowFriday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
+    }
+    if (Fog.OnDay2 & 1 << Sat)
+    {
+      alarms[30] = Alarm.alarmRepeat(dowSaturday, Fog.On2Hr, Fog.On2Min, 0, FogOn); //
+      alarms[31] = Alarm.alarmRepeat(dowSaturday, Fog.Dur2Min, Fog.Dur2Sec, 0, FogOff); //
+    }
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Fan.Enable & 0xF0) {
+    if (Fan.OnDay & 1 << Sun)
+    {
+      alarms[32] = Alarm.alarmRepeat(dowSunday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
+      alarms[33] = Alarm.alarmRepeat(dowSunday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay & 1 << Mon)
+    {
+      alarms[34] = Alarm.alarmRepeat(dowMonday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
+      alarms[35] = Alarm.alarmRepeat(dowMonday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
+    }
+
+    if (Fan.OnDay & 1 << Tue)
+    {
+      alarms[36] = Alarm.alarmRepeat(dowTuesday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
+      alarms[37] = Alarm.alarmRepeat(dowTuesday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay & 1 << Wed)
+    {
+      alarms[38] = Alarm.alarmRepeat(dowWednesday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
+      alarms[39] = Alarm.alarmRepeat(dowWednesday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay & 1 << Thu)
+    {
+      alarms[40] = Alarm.alarmRepeat(dowThursday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
+      alarms[41] = Alarm.alarmRepeat(dowThursday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay & 1 << Fri)
+    {
+      alarms[42] = Alarm.alarmRepeat(dowFriday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
+      alarms[43] = Alarm.alarmRepeat(dowFriday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay & 1 << Sat)
+    {
+      alarms[44] = Alarm.alarmRepeat(dowSaturday, Fan.On1Hr, Fan.On1Min, 0, FanOn); //
+      alarms[45] = Alarm.alarmRepeat(dowSaturday, Fan.Dur1Min, Fan.Dur1Sec, 0, FanOff); //
+    }
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Fan.Enable & 0x0F) {
+    if (Fan.OnDay2 & 1 << Sun)
+    {
+      alarms[46] = Alarm.alarmRepeat(dowSunday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
+      alarms[47] = Alarm.alarmRepeat(dowSunday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay2 & 1 << Mon)
+    {
+      alarms[48] = Alarm.alarmRepeat(dowMonday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
+      alarms[49] = Alarm.alarmRepeat(dowMonday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay2 & 1 << Tue)
+    {
+      alarms[50] = Alarm.alarmRepeat(dowTuesday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
+      alarms[51] = Alarm.alarmRepeat(dowTuesday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay2 & 1 << Wed)
+    {
+      alarms[52] = Alarm.alarmRepeat(dowWednesday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
+      alarms[53] = Alarm.alarmRepeat(dowWednesday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay2 & 1 << Thu)
+    {
+      alarms[54] = Alarm.alarmRepeat(dowThursday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
+      alarms[55] = Alarm.alarmRepeat(dowThursday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay2 & 1 << Fri)
+    {
+      alarms[56] = Alarm.alarmRepeat(dowFriday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
+      alarms[57] = Alarm.alarmRepeat(dowFriday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
+    }
+    if (Fan.OnDay2 & 1 << Sat)
+    {
+      alarms[58] = Alarm.alarmRepeat(dowSaturday, Fan.On2Hr, Fan.On2Min, 0, FanOn); //
+      alarms[59] = Alarm.alarmRepeat(dowSaturday, Fan.Dur2Min, Fan.Dur2Sec, 0, FanOff); //
+    }
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist.Enable & 0xF0) {
+    if (Mist.OnDay & 1 << Sun)
+    {
+      alarms[60] = Alarm.alarmRepeat(dowSunday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
+      alarms[61] = Alarm.alarmRepeat(dowSunday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
+    }
+    if (Mist.OnDay & 1 << Mon)
+    {
+      alarms[62] = Alarm.alarmRepeat(dowMonday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
+      alarms[63] = Alarm.alarmRepeat(dowMonday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
+    }
+    if (Mist.OnDay & 1 << Tue)
+    {
+      alarms[64] = Alarm.alarmRepeat(dowTuesday, Mist.On1Hr, Mist.On1Min, 0, MistOn); //
+      alarms[65] = Alarm.alarmRepeat(dowTuesday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff); //
+    }
+    if (Mist.OnDay & 1 << Wed)
+    {
+      alarms[66] = Alarm.alarmRepeat(dowWednesday, Mist.On1Hr, Mist.On1Min, 0, MistOn);             //
+      alarms[67] = Alarm.alarmRepeat(dowWednesday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff);         //
+    } //                                                                                            //
+    if (Mist.OnDay & 1 << Thu)                                                                      //
+    { //                                                                                            //
+      alarms[68] = Alarm.alarmRepeat(dowThursday, Mist.On1Hr, Mist.On1Min, 0, MistOn);              //
+      alarms[69] = Alarm.alarmRepeat(dowThursday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff);          //
+    } //                                                                                            //
+    if (Mist.OnDay & 1 << Fri)                                                                      //
+    { //                                                                                            //
+      alarms[70] = Alarm.alarmRepeat(dowFriday, Mist.On1Hr, Mist.On1Min, 0, MistOn);                //
+      alarms[71] = Alarm.alarmRepeat(dowFriday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff);            //
+    } //                                                                                            //
+    if (Mist.OnDay & 1 << Sat)                                                                      //
+    { //                                                                                            //
+      alarms[72] = Alarm.alarmRepeat(dowSaturday, Mist.On1Hr, Mist.On1Min, 0, MistOn);              //
+      alarms[73] = Alarm.alarmRepeat(dowSaturday, Mist.Dur1Min, Mist.Dur1Sec, 0, MistOff);          //
+    } //                                                                                            //
+  } //                                                                                              //
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist.Enable & 0x0F) {
+    if (Mist.OnDay2 & 1 << Sun)
+    {
+      alarms[74] = Alarm.alarmRepeat(dowSunday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
+      alarms[75] = Alarm.alarmRepeat(dowSunday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist.OnDay2 & 1 << Mon)
+    {
+      alarms[76] = Alarm.alarmRepeat(dowMonday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
+      alarms[77] = Alarm.alarmRepeat(dowMonday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist.OnDay2 & 1 << Tue)
+    {
+      alarms[78] = Alarm.alarmRepeat(dowTuesday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
+      alarms[79] = Alarm.alarmRepeat(dowTuesday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist.OnDay2 & 1 << Wed)
+    {
+      alarms[80] = Alarm.alarmRepeat(dowWednesday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
+      alarms[81] = Alarm.alarmRepeat(dowWednesday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist.OnDay2 & 1 << Thu)
+    {
+      alarms[82] = Alarm.alarmRepeat(dowThursday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
+      alarms[83] = Alarm.alarmRepeat(dowThursday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist.OnDay2 & 1 << Fri)
+    {
+      alarms[84] = Alarm.alarmRepeat(dowFriday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
+      alarms[85] = Alarm.alarmRepeat(dowFriday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist.OnDay2 & 1 << Sat)
+    {
+      alarms[86] = Alarm.alarmRepeat(dowSaturday, Mist.On2Hr, Mist.On2Min, 0, MistOn); //
+      alarms[87] = Alarm.alarmRepeat(dowSaturday, Mist.Dur2Min, Mist.Dur2Sec, 0, MistOff); //
+    }
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist2.Enable & 0xF0) {
+    if (Mist2.OnDay & 1 << Sun)
+    {
+      alarms[88] = Alarm.alarmRepeat(dowSunday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
+      alarms[89] = Alarm.alarmRepeat(dowSunday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay & 1 << Mon)
+    {
+      alarms[90] = Alarm.alarmRepeat(dowMonday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
+      alarms[91] = Alarm.alarmRepeat(dowMonday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay & 1 << Tue)
+    {
+      alarms[92] = Alarm.alarmRepeat(dowTuesday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
+      alarms[93] = Alarm.alarmRepeat(dowTuesday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay & 1 << Wed)
+    {
+      alarms[94] = Alarm.alarmRepeat(dowWednesday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
+      alarms[95] = Alarm.alarmRepeat(dowWednesday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay & 1 << Thu)
+    {
+      alarms[96] = Alarm.alarmRepeat(dowThursday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
+      alarms[97] = Alarm.alarmRepeat(dowThursday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay & 1 << Fri)
+    {
+      alarms[98] = Alarm.alarmRepeat(dowFriday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
+      alarms[99] = Alarm.alarmRepeat(dowFriday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay & 1 << Sat)
+    {
+      alarms[100] = Alarm.alarmRepeat(dowSaturday, Mist2.On1Hr, Mist2.On1Min, 0, MistOn); //
+      alarms[101] = Alarm.alarmRepeat(dowSaturday, Mist2.Dur1Min, Mist2.Dur1Sec, 0, MistOff); //
+    }
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist2.Enable & 0x0F) {
+    if (Mist2.OnDay2 & 1 << Sun)
+    {
+      alarms[102] = Alarm.alarmRepeat(dowSunday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
+      alarms[103] = Alarm.alarmRepeat(dowSunday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay2 & 1 << Mon)
+    {
+      alarms[104] = Alarm.alarmRepeat(dowMonday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
+      alarms[105] = Alarm.alarmRepeat(dowMonday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay2 & 1 << Tue)
+    {
+      alarms[106] = Alarm.alarmRepeat(dowTuesday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
+      alarms[107] = Alarm.alarmRepeat(dowTuesday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay2 & 1 << Wed)
+    {
+      alarms[108] = Alarm.alarmRepeat(dowWednesday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
+      alarms[109] = Alarm.alarmRepeat(dowWednesday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay2 & 1 << Thu)
+    {
+      alarms[110] = Alarm.alarmRepeat(dowThursday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
+      alarms[111] = Alarm.alarmRepeat(dowThursday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay2 & 1 << Fri)
+    {
+      alarms[112] = Alarm.alarmRepeat(dowFriday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
+      alarms[113] = Alarm.alarmRepeat(dowFriday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
+    }
+    if (Mist2.OnDay2 & 1 << Sat)
+    {
+      alarms[114] = Alarm.alarmRepeat(dowSaturday, Mist2.On2Hr, Mist2.On2Min, 0, MistOn); //
+      alarms[115] = Alarm.alarmRepeat(dowSaturday, Mist2.Dur2Min, Mist2.Dur2Sec, 0, MistOff); //
+    }
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+#if debug
+  for (byte q = 0; q < 116; q++)
+  {
+    Serial.print(F("Alarm element "));
+    Serial.print(q);
+    Serial.print(' ');
+    Serial.println(alarms[q]);
+  }
 #endif
-    alarmset = 0;
+  testRelays();
+}
+void testRelays()
+{
+  byte light1ret = checkRelays(Light, 1, 0);
+  if (light1ret == 0x1F)
+  {
+    //Serial.println(F("Light1 On"));
+    Lights1On();
+  }
+  else
+  {
+    //Serial.println(F("Light1 Off"));
+    Lights1Off();
+  }
+  byte light2ret = checkRelays(Light, 2, 0);
+  if (light2ret == 0x2F)
+  {
+    //Serial.println(F("Light2 On "));
+    Lights2On();
+  }
+  else
+  {
+    //Serial.println(F("Light2 Off"));
+    Lights2Off();
+  }
+  byte fog1ret = checkRelays(Fog, 1, 1);
+  if (fog1ret == 0x1F)
+  {
+    //Serial.println(F("Fog1 On"));
+  }
+  else
+  {
+    //Serial.println(F("Fog1 Off"));
+  }
+  byte fog2ret = checkRelays(Fog, 2, 1);
+  if (fog2ret == 0x2F)
+  {
+    //Serial.println(F("Fog2 On "));
+  }
+  else
+  {
+    //Serial.println(F("Fog2 Off"));
+  }
+  if ((fog1ret == 0x1F) || (fog2ret == 0x2F)) FogOn();
+  if ((fog1ret == 0x10) && (fog2ret == 0x20)) FogOff();
+  byte fan1ret = checkRelays(Fan, 1, 1);
+  if (fan1ret == 0x1F)
+  {
+    //Serial.println(F("Fan1 On "));
+  }
+  else
+  {
+    //Serial.println(F("Fan1 Off"));
+  }
+  byte fan2ret = checkRelays(Fan, 2, 1);
+  if (fan2ret == 0x2F)
+  {
+    //Serial.println(F("Fan2 On "));
+  }
+  else
+  {
+    //Serial.println(F("Fan2 Off"));
+  }
+  if ((fan1ret == 0x1F) || (fan2ret == 0x2F)) FanOn();
+  if ((fan1ret == 0x10) && (fan2ret == 0x20)) FanOff();
+  byte mist1ret = checkRelays(Mist, 1, 1);
+  if (mist1ret == 0x1F)
+  {
+    //Serial.println(F("Mist1 On "));
+  }
+  else
+  {
+    //Serial.println(F("Mist1 Off"));
+  }
+  byte mist2ret = checkRelays(Mist, 2, 1);
+  if (mist2ret == 0x2F)
+  {
+    //Serial.println(F("Mist2 On "));
+  }
+  else
+  {
+    //Serial.println(F("Mist2 Off"));
+  }
+  byte mist3ret = checkRelays(Mist2, 1, 1);
+  if (mist3ret == 0x1F)
+  {
+    //Serial.println(F("Mist3 On "));
+  }
+  else
+  {
+    //Serial.println(F("Mist3 Off"));
+  }
+  byte mist4ret = checkRelays(Mist2, 2, 1);
+  if (mist4ret == 0x2F)
+  {
+    //Serial.println(F("Mist4 On "));
+  }
+  else
+  {
+    //Serial.println(F("Mist4 Off"));
+  }
+  if ((mist1ret == 0x1F) || (mist2ret == 0x2F) || (mist3ret == 0x1F) || (mist4ret == 0x2F)) MistOn();
+  if ((mist1ret == 0x10) && (mist2ret == 0x20) && (mist3ret == 0x10) && (mist4ret == 0x20)) MistOff();
+}
+
+
+byte checkRelays(SCHEDULE parameter, byte item, byte enable)
+{
+  unsigned long mynowRtc, mynowOn, mynowOff;
+  DateTime mynow = rtc.now().unixtime();
+  mynowRtc = mySecs(0, mynow.hour(), mynow.minute(), mynow.second());
+  byte d;
+  if (!enable)
+  {
+    switch (item)
+    {
+      case 1:
+        mynowOn  = mySecs(0, parameter.On1Hr  , parameter.On1Min , 0);
+        mynowOff = mySecs(0, parameter.Dur1Min, parameter.Dur1Sec, 0);
+        if ((mynowOff) < (mynowOn))
+        {
+          if ((mynowRtc < mySecs(0, parameter.Dur1Min, parameter.Dur1Sec, 0)) && (mySecs(1, parameter.Dur1Min, parameter.Dur1Sec, 0) > mynowRtc))
+          {
+            mynowRtc = mySecs(1, mynow.hour(), mynow.minute(), mynow.second());
+            mynowOff = mySecs(1, parameter.Dur1Min, parameter.Dur1Sec, 0);
+          }
+          else
+          {
+            mynowOff = mySecs(1, parameter.Dur1Min, parameter.Dur1Sec, 0);
+          }
+        }
+        if ((mynowRtc < mynowOff) && (mynowRtc > mynowOn))
+        {
+          return 0x1F;
+        }
+        else
+        {
+          return 0x10;
+        }
+        break;
+      case 2:
+        mynowOn  = mySecs(0, parameter.On2Hr, parameter.On2Min, 0);
+        mynowOff = mySecs(0, parameter.Dur2Min, parameter.Dur2Sec, 0);
+        if (mynowOff < mynowOn)
+        {
+          if ((mynowRtc < mySecs(0, parameter.Dur2Min, parameter.Dur2Sec, 0)) && ((mySecs(1, parameter.Dur2Min, parameter.Dur2Sec, 0)) > mynowRtc))
+          {
+            mynowRtc = mySecs(1, mynow.hour(), mynow.minute(), mynow.second());
+            mynowOff = mySecs(1, parameter.Dur2Min, parameter.Dur2Sec, 0);
+          }
+          else
+          {
+            mynowOff = mySecs(1, parameter.Dur2Min, parameter.Dur2Sec, 0);
+          }
+        }
+        if ( (mynowRtc < mynowOff) && (mynowRtc > mynowOn) )
+        {
+          return 0x2F;
+        }
+        else
+        {
+          return 0x20;
+        }
+        break;
+    }
+  }
+  else
+  {
+    // Do 'CLEVER' stuff here
+    byte mask;
+    if (item == 1) mask = 0xF0;
+    if (item == 2) mask = 0x0F;
+    if (parameter.Enable &= mask)
+    {
+      switch (item)
+      {
+        case 1:
+          mynowOn  = mySecs(0, parameter.On1Hr, parameter.On1Min, 0);
+          mynowOff = mySecs(0, parameter.Dur1Min, parameter.Dur1Sec, 0);
+          if ((mynowOff) < (mynowOn))
+          {
+            if ((mynowRtc < mySecs(0, parameter.Dur1Min, parameter.Dur1Sec, 0)) && ((mySecs(1, parameter.Dur1Min, parameter.Dur1Sec, 0)) > mynowRtc))
+            {
+              mynowOff = mySecs(1, parameter.Dur1Min, parameter.Dur1Sec, 0);
+              mynowRtc = mySecs(1, mynow.hour(), mynow.minute(), mynow.second());
+            }
+            else
+            {
+              mynowOff = mySecs(1, parameter.Dur1Min, parameter.Dur1Sec, 0);
+            }
+          }
+          if ( (mynowRtc < mynowOff) && (mynowRtc > mynowOn) )
+          {
+#if debug
+            Serial.println(F("Function 1 Should be on-enabled"));
+#endif
+            return 0x1F;
+          }
+          else
+          {
+#if debug
+            Serial.println(F("Function 1 Should be off-enabled"));
+#endif
+            return 0x10;
+          }
+          break;
+        case 2:
+          mynowOn  = mySecs(0, parameter.On2Hr, parameter.On2Min, 0);
+          mynowOff = mySecs(0, parameter.Dur2Min, parameter.Dur2Sec, 0);
+          if (mynowOff < mynowOn)
+          {
+            if ((mynowRtc < mySecs(0, parameter.Dur2Min, parameter.Dur2Sec, 0)) && ((mySecs(1, parameter.Dur2Min, parameter.Dur2Sec, 0)) > mynowRtc))
+            {
+              mynowOff = mySecs(1, parameter.Dur2Min, parameter.Dur2Sec, 0);
+              mynowRtc = mySecs(1, mynow.hour(), mynow.minute(), mynow.second());
+            }
+            else
+            {
+              mynowOff = mySecs(1, parameter.Dur2Min, parameter.Dur2Sec, 0);
+            }
+          }
+          if ( (mynowRtc < mynowOff) && (mynowRtc > mynowOn) )
+          {
+#if debug
+            Serial.println(F("Function 2 Should be on-enabled"));
+#endif
+            return 0x2F;
+          }
+          else
+          {
+#if debug
+            Serial.println(F("Function 2 Should be off-enabled"));
+#endif
+            return 0x20;
+          }
+          break;
+      }
+    }
+    else
+    {
+      switch (item)
+      {
+        case 1:
+#if debug
+          Serial.println(F("Function 1 Disabled"));
+#endif
+          return 0x10;
+          break;
+        case 2:
+#if debug
+          Serial.println(F("Function 2 Disabled"));
+#endif
+          return 0x20;
+          break;
+      }
+    }
   }
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void lowTemp()
+{
+  if (prevlowTemp != temp1)
+  {
+    if ((temp1 < heater) && (heatOn == 0))
+    {
+      heatOn = 1;
+      //heater += 2;
+      HeaterOn();
+    }
+    if ((heatOn == 1) && (temp1 > (heater + 0.5)))
+    {
+      heatOn = 0;
+      //heater -= 2;
+      HeaterOff();
+    }
+    prevlowTemp = temp1;
+  }
+}
+
+void hiTemp()
+{
+  if (prevhiTemp != temp1)
+  {
+    if ((temp1 > fan) && (fanOn == 0))
+    {
+      fanOn = 1;
+      //fan -= 2;
+      FanOn();
+    }
+    if ((fanOn == 1) && (temp1 < (fan - 0.5)))
+    {
+      fanOn = 0;
+      //fan  += 2;
+      FanOff();
+    }
+    prevhiTemp = temp1;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+void listActiveAlarms()
+{
+  char buf[60];
+  Serial.println(F("Alarm Dump\n\nLights\n"));
+  sprintf(buf, "Lights 1_On %02d:%02d Off %02d:%02d\n", Light.On1Hr, Light.On1Min, Light.Dur1Min, Light.Dur1Sec );
+  Serial.print(buf);
+  sprintf(buf, "Lights 2_On %02d:%02d Off %02d:%02d\n", Light.On2Hr, Light.On2Min, Light.Dur2Min, Light.Dur2Sec );
+  Serial.println(buf);
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Serial.println(F("Fogger\n"));
+  if (Fog.Enable & 0xF0) {
+    sprintf(buf, "Fog    1_On %02d:%02d Off %02d:%02d ", Fog.On1Hr, Fog.On1Min, Fog.Dur1Min, Fog.Dur1Sec );
+    if (Fog.OnDay & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println(F("Fog    1_Off"));
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Fog.Enable & 0x0F) {
+    sprintf(buf, "Fog    2_On %02d:%02d Off %02d:%02d ", Fog.On2Hr, Fog.On2Min, Fog.Dur2Min, Fog.Dur2Sec );
+    if (Fog.OnDay2 & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Fog.OnDay2 & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.println(buf);
+  } else Serial.println(F("Fog    2_Off\n"));
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Serial.println(F("Misting\n"));
+  if (Mist.Enable & 0xF0) {
+    sprintf(buf, "Mist   1_On %02d:%02d Off %02d:%02d ", Mist.On1Hr, Mist.On1Min, Mist.Dur1Min, Mist.Dur1Sec );
+    if (Mist.OnDay & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println(F("Mist   1_Off"));
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist.Enable & 0x0F) {
+    sprintf(buf, "Mist   2_On %02d:%02d Off %02d:%02d ", Mist.On2Hr, Mist.On2Min, Mist.Dur2Min, Mist.Dur2Sec );
+    if (Mist.OnDay2 & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Mist.OnDay2 & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println(F("Mist   2_Off"));
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist2.Enable & 0xF0) {
+    sprintf(buf, "Mist   3_On %02d:%02d Off %02d:%02d ", Mist2.On1Hr, Mist2.On1Min, Mist2.Dur1Min, Mist2.Dur1Sec );
+    if (Mist2.OnDay & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println(F("Mist   3_Off"));
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Mist2.Enable & 0x0F) {
+    sprintf(buf, "Mist   4_On %02d:%02d Off %02d:%02d ", Mist2.On2Hr, Mist2.On2Min, Mist2.Dur2Min, Mist2.Dur2Sec );
+    if (Mist2.OnDay2 & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Mist2.OnDay2 & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.println(buf);
+  } else Serial.println(F("Mist   4_Off\n"));
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Serial.println(F("Fan\n"));
+  if (Fan.Enable & 0xF0) {
+    sprintf(buf, "Fan    1_On %02d:%02d Off %02d:%02d ", Fan.On1Hr, Fan.On1Min, Fan.Dur1Min, Fan.Dur1Sec );
+    if (Fan.OnDay & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.print(buf);
+  } else Serial.println(F("Fan    1_Off"));
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Fan.Enable & 0x0F) {
+    sprintf(buf, "Fan    2_On %02d:%02d Off %02d:%02d ", Fan.On2Hr, Fan.On2Min, Fan.Dur2Min, Fan.Dur2Sec );
+    if (Fan.OnDay2 & 1 << Sun)
+    {
+      strcat(buf, "Sun ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Mon)
+    {
+      strcat(buf, "Mon ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Tue)
+    {
+      strcat(buf, "Tue ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Wed)
+    {
+      strcat(buf, "Wed ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Thu)
+    {
+      strcat(buf, "Thu ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Fri)
+    {
+      strcat(buf, "Fri ");
+    } else strcat(buf, "    ");
+    if (Fan.OnDay2 & 1 << Sat)
+    {
+      strcat(buf, "Sat ");
+    } else strcat(buf, "    ");
+    strcat(buf, "\n");
+    Serial.println(buf);
+  } else Serial.println(F("Fan    2_Off\n"));
+  Serial.println(F("Hi/Lo\n"));
+  char outstr1[10];
+  char outstr2[10];
+  if ((temp1Hi != 0) && (temp1Lo != 65535))
+  {
+    dtostrf(temp1Hi / 100.0, 5, 2, outstr2);
+    dtostrf(temp1Lo / 100.0, 5, 2, outstr1);
+    sprintf(buf, "Temp1 Lo:%s Hi:%s\n", outstr1, outstr2 );
+    Serial.println(buf);
+  }
+  if ((temp2Hi != 0) && (temp2Lo != 65535))
+  {
+    dtostrf(temp2Hi / 100.0, 5, 2, outstr2);
+    dtostrf(temp2Lo / 100.0, 5, 2, outstr1);
+    sprintf(buf, "Temp2 Lo:%s Hi:%s\n", outstr1, outstr2);
+    Serial.println(buf);
+  }
+  if ((temp3Hi != 0) && (temp3Lo != 65535))
+  {
+    dtostrf(temp3Hi / 100.0, 5, 2, outstr2);
+    dtostrf(temp3Lo / 100.0, 5, 2, outstr1);
+    sprintf(buf, "Temp3 Lo:%s Hi:%s\n", outstr1, outstr2);
+    Serial.println(buf);
+  }
+  if ((hum1Hi != 0) && (hum1Lo != 65535))
+  {
+    dtostrf(hum1Hi / 100.0, 5, 2, outstr2);
+    dtostrf(hum1Lo / 100.0, 5, 2, outstr1);
+    sprintf(buf, "Hum 1 Lo:%s Hi:%s\n", outstr1, outstr2);
+    Serial.println(buf);
+  }
+}
+
+void relayOff(byte flag)
+{
+  Relay |= (1 << flag);
+}
+/////////////////////////////////////////////////////////////////////////////////////////////
+void relayOn(byte flag)
+{
+  Relay &= ~(1 << flag);
+}
+/////////////////////////////////////////////////////////////////////////////////////////////
 void Lights1On() {
 #if debug
   Serial.println(F("Lights1 on"));
@@ -4755,444 +5048,19 @@ void MistOff() {                                                   //
 #endif
   relayOff(pwrMisting1);
 }
-void Repeats() {
+void HeaterOn() {                                                      //
 #if debug
+  Serial.println(F("Heater On"));
   digitalClockDisplay();
-  Serial.println(F("15 second timer"));
 #endif
+  relayOn(pwrTemp1);
 }
-void listActiveAlarms()
-{
-  char buf[60];
-  myGLCD.setWritePage(0);
-  myGLCD.clrScr();
-  myGLCD.setColor(19 , 183, 8);
-  myGLCD.setFont(arial_bold);
-  const char a[] PROGMEM="Alarm Dump";
-  Serial.println(a);
-  Serial.println();
-  myGLCD.print(a, 0, 20);
-  const char b[] PROGMEM="Lights";
-  Serial.println(b);
-  Serial.println();
-  myGLCD.print(b, 10, 40);
-  myGLCD.setFont(TinyFont);
-  myGLCD.setColor(134, 250, 124);
-  sprintf(buf, "Lights 1_On %02d:%02d Off %02d:%02d", Light.On1Hr, Light.On1Min, Light.Dur1Min, Light.Dur1Sec );
-  myGLCD.print(buf, 20, 80);
-  Serial.print(buf);
-  Serial.println();
-  sprintf(buf, "Lights 2_On %02d:%02d Off %02d:%02d", Light.On2Hr, Light.On2Min, Light.Dur2Min, Light.Dur2Sec );
-  myGLCD.print(buf, 20, 90);
-  Serial.println(buf);
-  Serial.println();
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  myGLCD.setColor(19 , 183, 8);
-  myGLCD.setFont(arial_bold);
-  const char c[] PROGMEM="Fogger";
-  myGLCD.print(c, 10, 110);
-  Serial.println(c);
-  Serial.println();
-  myGLCD.setFont(TinyFont);
-  myGLCD.setColor(134, 250, 124);
-  if (Fog.Enable & 0xF0) {
-    sprintf(buf, "Fog    1_On %02d:%02d Off %02d:%02d ", Fog.On1Hr, Fog.On1Min, Fog.Dur1Min, Fog.Dur1Sec );
-    if (Fog.OnDay & 1 << Sun)
-    {
-      strcat(buf, "Sun ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay & 1 << Mon)
-    {
-      strcat(buf, "Mon ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay & 1 << Tue)
-    {
-      strcat(buf, "Tue ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay & 1 << Wed)
-    {
-      strcat(buf, "Wed ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay & 1 << Thu)
-    {
-      strcat(buf, "Thu ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay & 1 << Fri)
-    {
-      strcat(buf, "Fri ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay & 1 << Sat)
-    {
-      strcat(buf, "Sat ");
-    } else strcat(buf, "    ");
-    Serial.print(buf);
-    Serial.println();
-    myGLCD.print(buf, 20, 150);
-  } 
-  else 
-  {
-    const char d[] PROGMEM="Fog    1_Off";
-    myGLCD.print(d, 20, 150);  
-    Serial.print(d);
-    Serial.println();
-  }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (Fog.Enable & 0x0F) {
-    sprintf(buf, "Fog    2_On %02d:%02d Off %02d:%02d ", Fog.On2Hr, Fog.On2Min, Fog.Dur2Min, Fog.Dur2Sec );
-    if (Fog.OnDay2 & 1 << Sun)
-    {
-      strcat(buf, "Sun ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay2 & 1 << Mon)
-    {
-      strcat(buf, "Mon ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay2 & 1 << Tue)
-    {
-      strcat(buf, "Tue ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay2 & 1 << Wed)
-    {
-      strcat(buf, "Wed ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay2 & 1 << Thu)
-    {
-      strcat(buf, "Thu ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay2 & 1 << Fri)
-    {
-      strcat(buf, "Fri ");
-    } else strcat(buf, "    ");
-    if (Fog.OnDay2 & 1 << Sat)
-    {
-      strcat(buf, "Sat ");
-    } else strcat(buf, "    ");
-    myGLCD.print(buf, 20, 160);
-    Serial.println(buf);
-    Serial.println();
-  } 
-  else 
-  {
-    const char e[] PROGMEM="Fog    2_Off";
-    myGLCD.print(e, 20, 160);  
-    Serial.println(e);
-    Serial.println();
-  }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  myGLCD.setColor(19 , 183, 8);
-  myGLCD.setFont(arial_bold);
-  const char f[] PROGMEM="Misting";
-  myGLCD.print(f, 10, 180);
-  Serial.println(f);
-  Serial.println();
-  myGLCD.setFont(TinyFont);
-  myGLCD.setColor(134, 250, 124);
-  if (Mist.Enable & 0xF0) {
-    sprintf(buf, "Mist   1_On %02d:%02d Off %02d:%02d ", Mist.On1Hr, Mist.On1Min, Mist.Dur1Min, Mist.Dur1Sec );
-    if (Mist.OnDay & 1 << Sun)
-    {
-      strcat(buf, "Sun ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay & 1 << Mon)
-    {
-      strcat(buf, "Mon ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay & 1 << Tue)
-    {
-      strcat(buf, "Tue ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay & 1 << Wed)
-    {
-      strcat(buf, "Wed ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay & 1 << Thu)
-    {
-      strcat(buf, "Thu ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay & 1 << Fri)
-    {
-      strcat(buf, "Fri ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay & 1 << Sat)
-    {
-      strcat(buf, "Sat ");
-    } else strcat(buf, "    ");
-    myGLCD.print(buf, 20, 220);
-    Serial.print(buf);
-    Serial.println();
-  } 
-  else 
-  {
-    const char g[] PROGMEM="Mist   1_Off";
-    myGLCD.print(g, 20, 220);  
-    Serial.print(g);
-    Serial.println();
-  }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (Mist.Enable & 0x0F) {
-    sprintf(buf, "Mist   2_On %02d:%02d Off %02d:%02d ", Mist.On2Hr, Mist.On2Min, Mist.Dur2Min, Mist.Dur2Sec );
-    if (Mist.OnDay2 & 1 << Sun)
-    {
-      strcat(buf, "Sun ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay2 & 1 << Mon)
-    {
-      strcat(buf, "Mon ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay2 & 1 << Tue)
-    {
-      strcat(buf, "Tue ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay2 & 1 << Wed)
-    {
-      strcat(buf, "Wed ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay2 & 1 << Thu)
-    {
-      strcat(buf, "Thu ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay2 & 1 << Fri)
-    {
-      strcat(buf, "Fri ");
-    } else strcat(buf, "    ");
-    if (Mist.OnDay2 & 1 << Sat)
-    {
-      strcat(buf, "Sat ");
-    } else strcat(buf, "    ");
-    myGLCD.print(buf, 20, 230);
-    Serial.print(buf);
-    Serial.println();
-  } 
-  else 
-  {
-    const char h[] PROGMEM="Mist   2_Off";
-    myGLCD.print(h, 20, 230);  
-    Serial.print(h);
-    Serial.println();
-  }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (Mist2.Enable & 0xF0) {
-    sprintf(buf, "Mist   3_On %02d:%02d Off %02d:%02d ", Mist2.On1Hr, Mist2.On1Min, Mist2.Dur1Min, Mist2.Dur1Sec );
-    if (Mist2.OnDay & 1 << Sun)
-    {
-      strcat(buf, "Sun ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay & 1 << Mon)
-    {
-      strcat(buf, "Mon ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay & 1 << Tue)
-    {
-      strcat(buf, "Tue ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay & 1 << Wed)
-    {
-      strcat(buf, "Wed ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay & 1 << Thu)
-    {
-      strcat(buf, "Thu ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay & 1 << Fri)
-    {
-      strcat(buf, "Fri ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay & 1 << Sat)
-    {
-      strcat(buf, "Sat ");
-    } else strcat(buf, "    ");
-    myGLCD.print(buf, 20, 240);
-    Serial.print(buf);
-    Serial.println();
-  } 
-  else 
-  {
-    const char i[] PROGMEM="Mist   3_Off";
-    myGLCD.print(i, 20, 240);  
-    Serial.print(i);
-    Serial.println();
-  }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (Mist2.Enable & 0x0F) {
-    sprintf(buf, "Mist   4_On %02d:%02d Off %02d:%02d ", Mist2.On2Hr, Mist2.On2Min, Mist2.Dur2Min, Mist2.Dur2Sec );
-    if (Mist2.OnDay2 & 1 << Sun)
-    {
-      strcat(buf, "Sun ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay2 & 1 << Mon)
-    {
-      strcat(buf, "Mon ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay2 & 1 << Tue)
-    {
-      strcat(buf, "Tue ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay2 & 1 << Wed)
-    {
-      strcat(buf, "Wed ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay2 & 1 << Thu)
-    {
-      strcat(buf, "Thu ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay2 & 1 << Fri)
-    {
-      strcat(buf, "Fri ");
-    } else strcat(buf, "    ");
-    if (Mist2.OnDay2 & 1 << Sat)
-    {
-      strcat(buf, "Sat ");
-    } else strcat(buf, "    ");
-    myGLCD.print(buf, 20, 250);
-    Serial.println(buf);
-    Serial.println();
-  } 
-  else 
-  {
-    const char j[] PROGMEM="Mist   4_Off";
-    myGLCD.print(j, 20, 250);  
-    Serial.println(j);
-    Serial.println();
-  }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  myGLCD.setColor(19 , 183, 8);
-  myGLCD.setFont(arial_bold);
-  const char k[] PROGMEM="Fan";
-  myGLCD.print(k, 10, 270);
-  Serial.println(k);
-  Serial.println();
-  myGLCD.setFont(TinyFont);
-  myGLCD.setColor(134, 250, 124);
-  if (Fan.Enable & 0xF0) {
-    sprintf(buf, "Fan    1_On %02d:%02d Off %02d:%02d ", Fan.On1Hr, Fan.On1Min, Fan.Dur1Min, Fan.Dur1Sec );
-    if (Fan.OnDay & 1 << Sun)
-    {
-      strcat(buf, "Sun ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay & 1 << Mon)
-    {
-      strcat(buf, "Mon ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay & 1 << Tue)
-    {
-      strcat(buf, "Tue ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay & 1 << Wed)
-    {
-      strcat(buf, "Wed ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay & 1 << Thu)
-    {
-      strcat(buf, "Thu ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay & 1 << Fri)
-    {
-      strcat(buf, "Fri ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay & 1 << Sat)
-    {
-      strcat(buf, "Sat ");
-    } else strcat(buf, "    ");
-    myGLCD.print(buf, 20, 310);
-    Serial.print(buf);
-    Serial.println();
-  } 
-  else 
-  {
-    const char l[] PROGMEM="Fan    1_Off";
-    myGLCD.print(l, 20, 310);  
-    Serial.print(l);
-    Serial.println();
-  }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (Fan.Enable & 0x0F) {
-    sprintf(buf, "Fan    2_On %02d:%02d Off %02d:%02d ", Fan.On2Hr, Fan.On2Min, Fan.Dur2Min, Fan.Dur2Sec );
-    if (Fan.OnDay2 & 1 << Sun)
-    {
-      strcat(buf, "Sun ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay2 & 1 << Mon)
-    {
-      strcat(buf, "Mon ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay2 & 1 << Tue)
-    {
-      strcat(buf, "Tue ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay2 & 1 << Wed)
-    {
-      strcat(buf, "Wed ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay2 & 1 << Thu)
-    {
-      strcat(buf, "Thu ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay2 & 1 << Fri)
-    {
-      strcat(buf, "Fri ");
-    } else strcat(buf, "    ");
-    if (Fan.OnDay2 & 1 << Sat)
-    {
-      strcat(buf, "Sat ");
-    } else strcat(buf, "    ");
-    myGLCD.print(buf, 20, 320);
-    Serial.println(buf);
-    Serial.println();
-  } 
-  else 
-  {
-    const char m[] PROGMEM="Fan    2_Off";
-    myGLCD.print(m, 20, 320);  
-    Serial.println(m);
-    Serial.println();
-  }
-  myGLCD.setColor(19 , 183, 8);
-  myGLCD.setFont(arial_bold);
-  const char n[] PROGMEM="Hi/Lo";
-  myGLCD.print(n, 10, 340);
-  Serial.println(n);
-  Serial.println();
-  myGLCD.setFont(TinyFont);
-  myGLCD.setColor(134, 250, 124);
-  char outstr1[10];
-  char outstr2[10];
-  if (temp1Hi != 0 || temp1Lo != 65535)
-  {
-    dtostrf(temp1Hi / 100.0, 5, 2, outstr2);
-    dtostrf(temp1Lo / 100.0, 5, 2, outstr1);
-    sprintf(buf, "Temp1 Lo:%s Hi:%s", outstr1, outstr2 );
-    myGLCD.print(buf, 20, 380);
-    Serial.print(buf);
-    Serial.println();
-  }
-  if (temp2Hi != 0 || temp2Lo != 65535)
-  {
-    dtostrf(temp2Hi / 100.0, 5, 2, outstr2);
-    dtostrf(temp2Lo / 100.0, 5, 2, outstr1);
-    sprintf(buf, "Temp2 Lo:%s Hi:%s", outstr1, outstr2);
-    myGLCD.print(buf, 20, 390);
-    Serial.print(buf);
-    Serial.println();
-  }
-  if (temp3Hi != 0 || temp3Lo != 65535)
-  {
-    dtostrf(temp3Hi / 100.0, 5, 2, outstr2);
-    dtostrf(temp3Lo / 100.0, 5, 2, outstr1);
-    sprintf(buf, "Temp3 Lo:%s Hi:%s", outstr1, outstr2);
-    myGLCD.print(buf, 20, 400);
-    Serial.print(buf);
-    Serial.println();
-  }
-  if (hum1Hi != 0 || hum1Lo != 65535)
-  {
-    dtostrf(hum1Hi / 100.0, 5, 2, outstr2);
-    dtostrf(hum1Lo / 100.0, 5, 2, outstr1);
-    sprintf(buf, "Hum 1 Lo:%s Hi:%s", outstr1, outstr2);
-    myGLCD.print(buf, 20, 410);
-    Serial.println(buf);
-    Serial.println();
-  }
-  updateTime = false;
-  dispScreen=9;
-  myGLCD.setDisplayPage(0);
+void HeaterOff() {                                                   //
+#if debug
+  Serial.println(F("Heater Off"));
+  digitalClockDisplay();
+#endif
+  relayOff(pwrTemp1);
 }
+
+
