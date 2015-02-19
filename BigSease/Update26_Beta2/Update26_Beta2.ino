@@ -5,8 +5,8 @@
 //                    everything else was sourced by David Sease, aka Bigsease30                    //
 //                                 Written for Arduino Mega 2560                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                     VERSION:  18/02/15 20:35GMT                                  //
-//                                    Development Version 25_Beta 1                                 //
+//                                     VERSION:  19/02/15 18.30GMT                                  //
+//                                    Development Version 26_Beta 2                                 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         CODE ORDER:                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,7 +213,7 @@ float heater;    // = 35.9;                                                     
 float fan;       // = 87.9;                                                                         //
 float temp1 = 0.0, temp2 = 0.0, temp3 = 0.0, hum1 = 0.0;                                            //
 AlarmID_t alarms[116];                                                                              //
-byte heatOn = 0, fanOn = 0;                                                                         //
+byte heatOn = 1, fanOn = 0;                                                                         //
 float prevlowTemp = 0.00;                                                                           //
 float prevhiTemp = 0.00;                                                                            //
 byte alarmset = 255, hourcount = 0;                                                                 //
@@ -313,9 +313,8 @@ void setup()                                                                    
 #if debug                                                                                           //
   Serial.println(F("Initialising SD card..."));                                                     //
 #endif                                                                                              //
-  bool mysd = 0;                                                                                    //
   // see if the card is present and can be initialized:                                             //
-  while (!mysd)                                                                                     //
+  while (heatOn)                                                                                     //
   { //                                                                                              //
     if (!sd.begin(SD_CHIP_SELECT, SPI_FULL_SPEED)) {                                                //
 #if debug                                                                                           //
@@ -325,7 +324,7 @@ void setup()                                                                    
     }                                                                                               //
     else                                                                                            //
     { //                                                                                            //
-      mysd = 1;                                                                                     //
+      heatOn = 0;                                                                                     //
 #if debug                                                                                           //
       Serial.println(F("Card initialised."));                                                       //
 #endif                                                                                              //
@@ -509,9 +508,7 @@ void loop()                                                                     
       { //                                                                                          //
         char hum[6];                                                                                //
         dtostrf(hum1, 4, 1, hum);                                                                   //
-        ubuntuRed();
-        //myGLCD.setColor(255, 77, 0);                                                                //
-        //myGLCD.setFont(Ubuntubold);                                                                 //
+        ubuntuRed();                                                                                //
         myGLCD.print(hum, 425, 405);                                                                //
 #if debug                                                                                           //
         Serial.print(F("Screen (Home) humidity update: "));                                         //
@@ -523,9 +520,7 @@ void loop()                                                                     
   if ((rightNow - tempTime) >= 1) { //                                                              //
     if (dispScreen == 1 || dispScreen == 3)                                                         //
     { //                                                                                            //
-      ubuntuRed();
-      // myGLCD.setColor(255, 77, 0);                                                                  //
-      // myGLCD.setFont(Ubuntubold);                                                                   //
+      ubuntuRed();                                                                                  //
     } //                                                                                            //
     char sensor[6] = "     ";                                                                       //
     float tmptemp1, tmptemp2, tmptemp3;                                                             //
@@ -637,51 +632,46 @@ void loop()                                                                     
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                       PAGE SETUP                                                 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-void screenHome()  // draw main home screen showing overview info
-{
-  DoScreen(1, 1);
-#if debug
-  Serial.println(F("Home Screen"));
-#endif
-  updateTime = false;
-  if (tmpTouchRepeatDelay != TouchRepeatDelay) TouchRepeatDelay = tmpTouchRepeatDelay;
-  // Draw Temp to screen
-  float tmptemp1, tmptemp2, tmptemp3, tmphum;
-  if (temp1 + temp2 + temp3 == 0.0) {
-    tempRead(temp1, temp2, temp3);
-  }
-  unsigned long rightNow = now();
+void screenHome()  // draw main home screen showing overview info                                   //
+{                                                                                                   //
+  DoScreen(1, 1);                                                                                   //
+#if debug                                                                                           //
+  Serial.println(F("Home Screen"));                                                                 //
+#endif                                                                                              //
+  updateTime = false;                                                                               //
+  if (tmpTouchRepeatDelay != TouchRepeatDelay) TouchRepeatDelay = tmpTouchRepeatDelay;              //
+  // Draw Temp to screen                                                                            //
+  float tmptemp1, tmptemp2, tmptemp3, tmphum;                                                       //
+  if (temp1 + temp2 + temp3 == 0.0) {                                                               //
+    tempRead(temp1, temp2, temp3);                                                                  //
+  } //                                                                                              //
+  unsigned long rightNow = now();                                                                   //
+  ubuntuRed();                                                                                      //
+  char sensor[6] = "     ";                                                                         //
+  dtostrf(temp1, 4, 1, sensor);                                                                     //
+  myGLCD.print(sensor, 411, 316);                                                                   //
+  if (temp2 != 0.0)                                                                                 //
+  { //                                                                                              //                                                                             
+    dtostrf(temp2, 4, 1, sensor);                                                                   //
+    myGLCD.print(sensor, 537, 316);                                                                 //
+  } //                                                                                              //
+  if (temp3 != 0.0)                                                                                 //
+  { //                                                                                              //
+    dtostrf(temp3, 4, 1, sensor);                                                                   //
+    myGLCD.print(sensor, 668, 316);                                                                 //
+  } //                                                                                              //
+  // Draw Humidity to screen                                                                        //
+  if (hum1 == 0.0) { //                                                                             //
+    humRead(hum1);                                                                                  //
+  } //                                                                                              //
+  if ((rightNow - humidTime) >= 2)                                                                  //
+  { //                                                                                              //
+    humRead(tmphum);                                                                                //
+    hum1 = tmphum;                                                                                  //
+  } //                                                                                              //
+  dtostrf(hum1, 4, 1, sensor);
   ubuntuRed();
-  //myGLCD.setColor(255, 77, 0);
-  //myGLCD.setFont(Ubuntubold);
-  char sensor[6] = "     ";
-  dtostrf(temp1, 4, 1, sensor);
-  myGLCD.print(sensor, 411, 316);
-  if (temp2 != 0.0)
-  {
-    dtostrf(temp2, 4, 1, sensor);
-    myGLCD.print(sensor, 537, 316);
-  }
-  if (temp3 != 0.0)
-  {
-    dtostrf(temp3, 4, 1, sensor);
-    myGLCD.print(sensor, 668, 316);
-  }
-  // Draw Humidity to screen
-  if (hum1 == 0.0) {
-    humRead(hum1);
-  }
-  if ((rightNow - humidTime) >= 2)
-  {
-    humRead(tmphum);
-    hum1 = tmphum;
-  }
-  char hum[6];
-  dtostrf(hum1, 4, 1, hum);
-  ubuntuRed();
-  //  myGLCD.setColor(255, 77, 0);
-  //  myGLCD.setFont(Ubuntubold);
-  myGLCD.print(hum, 425, 405);
+  myGLCD.print(sensor, 425, 405);
 }
 void screenLights()  // Lights screen
 {
@@ -715,8 +705,6 @@ void screenTemp()  // Temp Screen
     }
   }
   ubuntuRed();
-  //myGLCD.setColor(255, 77, 0);
-  //myGLCD.setFont(Ubuntubold);
   char sensor[6] = "     ";
   dtostrf(temp1, 4, 1, sensor);
   myGLCD.print(sensor, 47, 325);
@@ -1238,7 +1226,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           EEPROM.write(31, Fog.OnDay2);
           change = 0;
         }
-        if (change == 0)
+        if (!change)
         {
           setAlarms();
         }
@@ -1644,7 +1632,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
           EEPROM.write(53, Mist2.OnDay2);
           change = 0;
         }
-        if ( change == 0 )
+        if ( !change )
         {
           setAlarms();
         }
@@ -2112,8 +2100,9 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
       {
         if ((x >= 201) and (x < 261))
         {
-          if (mistScreen == 1)
+          switch(mistScreen)
           {
+          case 1:
             if ((tempM1.Enable & 0xF0) == 0xF0) {
               //    Serial.println(F("Mist 1 Sun"));
               if ((tempM1.OnDay & (1 << Sun)) == (1 << Sun)) {
@@ -2132,9 +2121,8 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
                 //dowFrog(tempM1.OnDay);
               }
             }
-          }
-          if (mistScreen == 2)
-          {
+          break;
+          case 2:         
             if ((tempM1.Enable & 0x0F) == 0x0F) {
               //     Serial.println(F("Mist 2 Sun"));
               if ((tempM1.OnDay2 & (1 << Sun)) == (1 << Sun)) {
@@ -2153,9 +2141,8 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
                 //dowFrog(tempM1.OnDay2);
               }
             }
-          }
-          if (mistScreen == 3)
-          {
+          break;
+          case 3:
             if ((tempM2.Enable & 0xF0) == 0xF0) {
               //       Serial.println(F("Mist 3 Sun"));
               if ((tempM2.OnDay & (1 << Sun)) == (1 << Sun)) {
@@ -2174,9 +2161,8 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
                 //dowFrog(tempM2.OnDay);
               }
             }
-          }
-          if (mistScreen == 4)
-          {
+          break;
+          case 4:
             if ((tempM2.Enable & 0x0F) == 0x0F) {
               //    Serial.println(F("Mist 4 Sun"));
               if ((tempM2.OnDay2 & (1 << Sun)) == (1 << Sun)) {
@@ -2195,6 +2181,7 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
                 //dowFrog(tempM2.OnDay2);
               }
             }
+          break;
           }
         }
         if ((x >= 277) and (x < 336))
@@ -3375,6 +3362,12 @@ void processMyTouch() // this is a huge block dedicated to processing all touch 
         myGLCD.setFont(Ubuntubold);
         myGLCD.printNumI(tempHD, 338, 167, 2);
         myGLCD.printNumI(BackLight, 313, 340, 2);
+      }
+      break;
+    case 9:    // Alarm screen
+      if (((x >= 365) && (x <= 440)) && ((y >= 420) && (y < 480))) // Return Home button
+      {
+        screenHome();
       }
       break;
   }
@@ -4666,11 +4659,11 @@ void listActiveAlarms()
   myGLCD.clrScr();
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char a[] PROGMEM="Alarm Dump";
+  const char a[] PROGMEM = "Alarm Dump";
   Serial.println(a);
   Serial.println();
   myGLCD.print(a, 0, 20);
-  const char b[] PROGMEM="Lights";
+  const char b[] PROGMEM = "Lights";
   Serial.println(b);
   Serial.println();
   myGLCD.print(b, 10, 40);
@@ -4687,7 +4680,7 @@ void listActiveAlarms()
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char c[] PROGMEM="Fogger";
+  const char c[] PROGMEM = "Fogger";
   myGLCD.print(c, 10, 110);
   Serial.println(c);
   Serial.println();
@@ -4726,11 +4719,11 @@ void listActiveAlarms()
     Serial.print(buf);
     Serial.println();
     myGLCD.print(buf, 20, 150);
-  } 
-  else 
+  }
+  else
   {
-    const char d[] PROGMEM="Fog    1_Off";
-    myGLCD.print(d, 20, 150);  
+    const char d[] PROGMEM = "Fog    1_Off";
+    myGLCD.print(d, 20, 150);
     Serial.print(d);
     Serial.println();
   }
@@ -4768,18 +4761,18 @@ void listActiveAlarms()
     myGLCD.print(buf, 20, 160);
     Serial.println(buf);
     Serial.println();
-  } 
-  else 
+  }
+  else
   {
-    const char e[] PROGMEM="Fog    2_Off";
-    myGLCD.print(e, 20, 160);  
+    const char e[] PROGMEM = "Fog    2_Off";
+    myGLCD.print(e, 20, 160);
     Serial.println(e);
     Serial.println();
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char f[] PROGMEM="Misting";
+  const char f[] PROGMEM = "Misting";
   myGLCD.print(f, 10, 180);
   Serial.println(f);
   Serial.println();
@@ -4818,11 +4811,11 @@ void listActiveAlarms()
     myGLCD.print(buf, 20, 220);
     Serial.print(buf);
     Serial.println();
-  } 
-  else 
+  }
+  else
   {
-    const char g[] PROGMEM="Mist   1_Off";
-    myGLCD.print(g, 20, 220);  
+    const char g[] PROGMEM = "Mist   1_Off";
+    myGLCD.print(g, 20, 220);
     Serial.print(g);
     Serial.println();
   }
@@ -4860,11 +4853,11 @@ void listActiveAlarms()
     myGLCD.print(buf, 20, 230);
     Serial.print(buf);
     Serial.println();
-  } 
-  else 
+  }
+  else
   {
-    const char h[] PROGMEM="Mist   2_Off";
-    myGLCD.print(h, 20, 230);  
+    const char h[] PROGMEM = "Mist   2_Off";
+    myGLCD.print(h, 20, 230);
     Serial.print(h);
     Serial.println();
   }
@@ -4902,11 +4895,11 @@ void listActiveAlarms()
     myGLCD.print(buf, 20, 240);
     Serial.print(buf);
     Serial.println();
-  } 
-  else 
+  }
+  else
   {
-    const char i[] PROGMEM="Mist   3_Off";
-    myGLCD.print(i, 20, 240);  
+    const char i[] PROGMEM = "Mist   3_Off";
+    myGLCD.print(i, 20, 240);
     Serial.print(i);
     Serial.println();
   }
@@ -4944,18 +4937,18 @@ void listActiveAlarms()
     myGLCD.print(buf, 20, 250);
     Serial.println(buf);
     Serial.println();
-  } 
-  else 
+  }
+  else
   {
-    const char j[] PROGMEM="Mist   4_Off";
-    myGLCD.print(j, 20, 250);  
+    const char j[] PROGMEM = "Mist   4_Off";
+    myGLCD.print(j, 20, 250);
     Serial.println(j);
     Serial.println();
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char k[] PROGMEM="Fan";
+  const char k[] PROGMEM = "Fan";
   myGLCD.print(k, 10, 270);
   Serial.println(k);
   Serial.println();
@@ -4994,11 +4987,11 @@ void listActiveAlarms()
     myGLCD.print(buf, 20, 310);
     Serial.print(buf);
     Serial.println();
-  } 
-  else 
+  }
+  else
   {
-    const char l[] PROGMEM="Fan    1_Off";
-    myGLCD.print(l, 20, 310);  
+    const char l[] PROGMEM = "Fan    1_Off";
+    myGLCD.print(l, 20, 310);
     Serial.print(l);
     Serial.println();
   }
@@ -5036,17 +5029,17 @@ void listActiveAlarms()
     myGLCD.print(buf, 20, 320);
     Serial.println(buf);
     Serial.println();
-  } 
-  else 
+  }
+  else
   {
-    const char m[] PROGMEM="Fan    2_Off";
-    myGLCD.print(m, 20, 320);  
+    const char m[] PROGMEM = "Fan    2_Off";
+    myGLCD.print(m, 20, 320);
     Serial.println(m);
     Serial.println();
   }
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char n[] PROGMEM="Hi/Lo";
+  const char n[] PROGMEM = "Hi/Lo";
   myGLCD.print(n, 10, 340);
   Serial.println(n);
   Serial.println();
@@ -5090,8 +5083,9 @@ void listActiveAlarms()
     Serial.println(buf);
     Serial.println();
   }
+  myFiles.loadcpld(20, 420, 760, 60, "9Alarm.raw", 0, 2);
   updateTime = false;
-  dispScreen=9;
+  dispScreen = 9;
   myGLCD.setDisplayPage(0);
 }
 
