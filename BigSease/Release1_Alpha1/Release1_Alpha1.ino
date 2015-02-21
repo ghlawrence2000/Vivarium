@@ -4,8 +4,8 @@
 //                          everything else was sourced by David Sease, aka Bigsease30                          //
 //                                       Written for Arduino Mega 2560                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                               VERSION:  20/02/15 19.30GMT                                    //
-//                                              Development Version 27_Beta 3                                   //
+//                                               VERSION:  21/02/15 08.25GMT                                    //
+//                                              Development Version Release1_Alpha1                             //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               CODE ORDER:                                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -818,7 +818,7 @@ void processMyTouch() //                                                        
   word x = myTouch.getX();                                                                                      //
   word y = myTouch.getY();                                                                                      //
   switch (dispScreen) //                                                                                        //
-  { //                                                                                                        //
+  { //                                                                                                          //
     case 1:  // home screen                                                                                     //
 #if debug                                                                                                       //
       if ((y >= 64) && (y < 114))                                                                               //
@@ -2733,15 +2733,6 @@ void processMyTouch() //                                                        
         if ((y >= 106) && (y < 184))
         {
           myFiles.load(51, 106, 78, 78, "blues.raw", 16, 0);
-          //          if ((tempM1.Enable & 0xF0) != 0xF0) // is blue set?
-          //          {
-          //            //            myGLCD.setColor(0, 0, 0);
-          //            //            myGLCD.fillRect(187, 216, 231, 251);
-          //          }
-          //          else
-          //          {
-          //            //            myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
-          //          }
           MistTimePrint(tempM1, 1);
           clrMist(mistScreen);
           mistScreen = 1;
@@ -2749,16 +2740,6 @@ void processMyTouch() //                                                        
         if ((y >= 193) && (y < 271))
         {
           myFiles.load(51, 193, 78, 78, "yellows.raw", 16, 0);
-          //          if ((tempM1.Enable & 0x0F) != 0x0F) // is yellow set?
-          //          {
-          //            //            myGLCD.setColor(0, 0, 0);
-          //            //            myGLCD.fillRect(187, 216, 231, 251);
-          //          }
-          //          else
-          //          {
-          //            //            myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
-          //
-          //          }
           MistTimePrint(tempM1, 2);
           clrMist(mistScreen);
           mistScreen = 2;
@@ -2766,16 +2747,6 @@ void processMyTouch() //                                                        
         if ((y >= 281) && (y < 359))
         {
           myFiles.load(51, 281, 78, 78, "greens.raw", 16, 0);
-          //          if ((tempM2.Enable & 0xF0) != 0xF0) // is green set?
-          //          {
-          //            //            myGLCD.setColor(0, 0, 0);
-          //            //            myGLCD.fillRect(187, 216, 231, 251);
-          //          }
-          //          else
-          //          {
-          //            //            myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
-          //
-          //          }
           MistTimePrint(tempM2, 3);
           clrMist(mistScreen);
           mistScreen = 3;
@@ -2783,16 +2754,6 @@ void processMyTouch() //                                                        
         if ((y >= 368) && (y < 446))
         {
           myFiles.load(51, 368, 78, 78, "greys.raw", 16, 0);
-          //          if ((tempM2.Enable & 0x0F) != 0x0F) // is grey set?
-          //          {
-          //            //            myGLCD.setColor(0, 0, 0);
-          //            //            myGLCD.fillRect(187, 216, 231, 251);
-          //          }
-          //          else
-          //          {
-          //            //            myFiles.load(187, 216, 45, 36, "Frog.raw", 16, 0);
-          //
-          //          }
           MistTimePrint(tempM2, 4);
           clrMist(mistScreen);
           mistScreen = 4;
@@ -3351,8 +3312,6 @@ time_t syncProvider()
 void updateTimeDate()
 {
   ubuntuRed();
-  //myGLCD.setColor(255, 77, 0);
-  //myGLCD.setFont(arial_bold);
   time_t timeNow = rtc.now().unixtime();
   // draw date and time
   if ((hour(timeNow) != prevRTC.Hour) || (minute(timeNow) != prevRTC.Minute) || !updateTime) { //time
@@ -3610,8 +3569,6 @@ void MistTimePrint(SCHEDULE mist, byte mscreen)
 void formatMistTime(byte Hr, byte Min, byte dMin, byte dSec)
 {
   ubuntuRed();
-  //myGLCD.setColor(255, 77, 0);
-  //myGLCD.setFont(Ubuntubold);
   myGLCD.printNumI(Hr, 314, 216, 2, ' ');
   myGLCD.printNumI(Min, 428, 216, 2, '0');
   myGLCD.printNumI(dMin, 576, 216, 2 , ' ');
@@ -3627,7 +3584,6 @@ void blankMistTime()
 }
 void dowFrog(byte dow)
 {
-  //  char fname[] = "Frog.raw";
   if (dow & 0x01) myGLCD.drawBitmap (209, 357, 45, 36, frog);
   if (dow & 0x02) myGLCD.drawBitmap (285, 357, 45, 36, frog);
   if (dow & 0x04) myGLCD.drawBitmap (358, 357, 45, 36, frog);
@@ -3635,7 +3591,6 @@ void dowFrog(byte dow)
   if (dow & 0x10) myGLCD.drawBitmap (511, 357, 45, 36, frog);
   if (dow & 0x20) myGLCD.drawBitmap (589, 357, 45, 36, frog);
   if (dow & 0x40) myGLCD.drawBitmap (663, 357, 45, 36, frog);
-  // myFiles.load(209, 357, 45, 36, fname , 16, 0);
 }
 void dowBlank(byte dow)
 {
@@ -3756,8 +3711,6 @@ void ffTimePrint(SCHEDULE fanfog, byte ffscreen)
 void formatFogfanTime(byte Hr, byte Min, byte dMin, byte dSec, byte ffscreen)
 {
   ubuntuRed();
-  //myGLCD.setColor(255, 77, 0);
-  //myGLCD.setFont(Ubuntubold);
   switch (ffscreen)
   {
     case 1:
@@ -3835,23 +3788,6 @@ void subBox(short x, short y)
     myGLCD.drawLine(x + 39 + yp, y + 4, x + 39 + yp, y + 37);
     myGLCD.drawLine(x + yp - 1, y + 4, x + yp - 1, y + 37);
   }
-
-  //  myGLCD.drawLine(x, y,     x + 42, y    );
-  //  myGLCD.drawLine(x, y + 1, x + 42, y + 1);
-  //  myGLCD.drawLine(x, y + 2, x + 42, y + 2);
-  //  myGLCD.drawLine(x, y + 3, x + 42, y + 3);
-  //
-  //  myGLCD.drawLine(x, y + 38, x + 42, y + 38);
-  //  myGLCD.drawLine(x, y + 39, x + 42, y + 39);
-  //  myGLCD.drawLine(x, y + 40, x + 42, y + 40);
-  //
-  //  myGLCD.drawLine(x    , y + 4, x    , y + 37);
-  //  myGLCD.drawLine(x + 1, y + 4, x + 1, y + 37);
-  //  myGLCD.drawLine(x + 2, y + 4, x + 2, y + 37);
-  //
-  //  myGLCD.drawLine(x + 40, y + 4, x + 40, y + 37);
-  //  myGLCD.drawLine(x + 41, y + 4, x + 41, y + 37);
-  //  myGLCD.drawLine(x + 42, y + 4, x + 42, y + 37);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #if DS1307 == 0
