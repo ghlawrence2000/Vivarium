@@ -4,7 +4,7 @@
 //                          everything else was sourced by David Sease, aka Bigsease30                          //
 //                                       Written for Arduino Mega 2560                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                               VERSION:  21/02/15 08.25GMT                                    //
+//                                               VERSION:  21/02/15 20.00GMT                                    //
 //                                              Development Version Release1_Alpha1                             //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               CODE ORDER:                                                    //
@@ -5343,6 +5343,8 @@ void hiTemp()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 void listActiveAlarms()
 {
+  byte hr, mn;
+  unsigned long tmpOff2;
   char buf[60];
   myGLCD.setWritePage(0);
   myGLCD.clrScr();
@@ -5358,11 +5360,11 @@ void listActiveAlarms()
   myGLCD.print(b, 10, 40);
   myGLCD.setFont(Sinclair_S);
   myGLCD.setColor(134, 250, 124);
-  sprintf_P(buf, PSTR("Lights 1_On %02d:%02d Off %02d:%02d"), Light.On1Hr, Light.On1Min, Light.Dur1Min, Light.Dur1Sec );
+  sprintf_P(buf, PSTR("Lights 1_On %02d:%02d.00 Off %02d:%02d.00"), Light.On1Hr, Light.On1Min, Light.Dur1Min, Light.Dur1Sec );
   myGLCD.print(buf, 20, 80);
   Serial.print(buf);
   Serial.println();
-  sprintf_P(buf, PSTR("Lights 2_On %02d:%02d Off %02d:%02d"), Light.On2Hr, Light.On2Min, Light.Dur2Min, Light.Dur2Sec );
+  sprintf_P(buf, PSTR("Lights 2_On %02d:%02d.00 Off %02d:%02d.00"), Light.On2Hr, Light.On2Min, Light.Dur2Min, Light.Dur2Sec );
   myGLCD.print(buf, 20, 90);
   Serial.println(buf);
   Serial.println();
@@ -5375,7 +5377,23 @@ void listActiveAlarms()
   myGLCD.setFont(Sinclair_S);
   myGLCD.setColor(134, 250, 124);
   if (Fog.Enable & 0xF0) {
-    sprintf_P(buf, PSTR("Fog    1_On %02d:%02d Off %02d:%02d "), Fog.On1Hr, Fog.On1Min, Fog.Dur1Min, Fog.Dur1Sec );
+    tmpOff2 = mySecs(0, Fog.On1Hr, Fog.On1Min, 0) + mySecs(0, 0, Fog.Dur1Min, Fog.Dur1Sec);
+    if (tmpOff2 > daysec)
+    {
+      tmpOff2 -= daysec;
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    else
+    {
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    sprintf_P(buf, PSTR("Fog    1_On %02d:%02d.00 Off %02d:%02d.%02d "), Fog.On1Hr, Fog.On1Min, hr, mn, tmpOff2);
     if (Fog.OnDay & 1 << Sun)
     {
       strcat(buf, "Sun ");
@@ -5416,7 +5434,23 @@ void listActiveAlarms()
     Serial.println();
   }
   if (Fog.Enable & 0x0F) {
-    sprintf_P(buf, PSTR("Fog    2_On %02d:%02d Off %02d:%02d "), Fog.On2Hr, Fog.On2Min, Fog.Dur2Min, Fog.Dur2Sec );
+    tmpOff2 = mySecs(0, Fog.On2Hr, Fog.On2Min, 0) + mySecs(0, 0, Fog.Dur2Min, Fog.Dur2Sec);
+    if (tmpOff2 > daysec)
+    {
+      tmpOff2 -= daysec;
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    else
+    {
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    sprintf_P(buf, PSTR("Fog    2_On %02d:%02d.00 Off %02d:%02d.%02d "), Fog.On2Hr, Fog.On2Min, hr, mn, tmpOff2);
     if (Fog.OnDay2 & 1 << Sun)
     {
       strcat(buf, "Sun ");
@@ -5465,7 +5499,23 @@ void listActiveAlarms()
   myGLCD.setFont(Sinclair_S);
   myGLCD.setColor(134, 250, 124);
   if (Mist.Enable & 0xF0) {
-    sprintf_P(buf, PSTR("Mist   1_On %02d:%02d Off %02d:%02d "), Mist.On1Hr, Mist.On1Min, Mist.Dur1Min, Mist.Dur1Sec );
+    tmpOff2 = mySecs(0, Mist.On1Hr, Mist.On1Min, 0) + mySecs(0, 0, Mist.Dur1Min, Mist.Dur1Sec);
+    if (tmpOff2 > daysec)
+    {
+      tmpOff2 -= daysec;
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    else
+    {
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    sprintf_P(buf, PSTR("Mist   1_On %02d:%02d.00 Off %02d:%02d.%02d "), Mist.On1Hr, Mist.On1Min, hr, mn, tmpOff2);
     if (Mist.OnDay & 1 << Sun)
     {
       strcat(buf, "Sun ");
@@ -5506,7 +5556,23 @@ void listActiveAlarms()
     Serial.println();
   }
   if (Mist.Enable & 0x0F) {
-    sprintf_P(buf, PSTR("Mist   2_On %02d:%02d Off %02d:%02d "), Mist.On2Hr, Mist.On2Min, Mist.Dur2Min, Mist.Dur2Sec );
+    tmpOff2 = mySecs(0, Mist.On2Hr, Mist.On2Min, 0) + mySecs(0, 0, Mist.Dur2Min, Mist.Dur2Sec);
+    if (tmpOff2 > daysec)
+    {
+      tmpOff2 -= daysec;
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    else
+    {
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    sprintf_P(buf, PSTR("Mist   2_On %02d:%02d.00 Off %02d:%02d.%02d "), Mist.On2Hr, Mist.On2Min, hr, mn, tmpOff2);
     if (Mist.OnDay2 & 1 << Sun)
     {
       strcat(buf, "Sun ");
@@ -5547,7 +5613,23 @@ void listActiveAlarms()
     Serial.println();
   }
   if (Mist2.Enable & 0xF0) {
-    sprintf_P(buf, PSTR("Mist   3_On %02d:%02d Off %02d:%02d "), Mist2.On1Hr, Mist2.On1Min, Mist2.Dur1Min, Mist2.Dur1Sec );
+    tmpOff2 = mySecs(0, Mist2.On1Hr, Mist2.On1Min, 0) + mySecs(0, 0, Mist2.Dur1Min, Mist2.Dur1Sec);
+    if (tmpOff2 > daysec)
+    {
+      tmpOff2 -= daysec;
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    else
+    {
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    sprintf_P(buf, PSTR("Mist   3_On %02d:%02d.00 Off %02d:%02d.%02d "), Mist2.On1Hr, Mist2.On1Min, hr, mn, tmpOff2);
     if (Mist2.OnDay & 1 << Sun)
     {
       strcat(buf, "Sun ");
@@ -5588,7 +5670,23 @@ void listActiveAlarms()
     Serial.println();
   }
   if (Mist2.Enable & 0x0F) {
-    sprintf_P(buf, PSTR("Mist   4_On %02d:%02d Off %02d:%02d "), Mist2.On2Hr, Mist2.On2Min, Mist2.Dur2Min, Mist2.Dur2Sec );
+    tmpOff2 = mySecs(0, Mist2.On2Hr, Mist2.On2Min, 0) + mySecs(0, 0, Mist2.Dur2Min, Mist2.Dur2Sec);
+    if (tmpOff2 > daysec)
+    {
+      tmpOff2 -= daysec;
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    else
+    {
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    sprintf_P(buf, PSTR("Mist   4_On %02d:%02d.00 Off %02d:%02d.%02d "), Mist2.On2Hr, Mist2.On2Min, hr, mn, tmpOff2);
     if (Mist2.OnDay2 & 1 << Sun)
     {
       strcat(buf, "Sun ");
@@ -5637,7 +5735,23 @@ void listActiveAlarms()
   myGLCD.setFont(Sinclair_S);
   myGLCD.setColor(134, 250, 124);
   if (Fan.Enable & 0xF0) {
-    sprintf_P(buf, PSTR("Fan    1_On %02d:%02d Off %02d:%02d "), Fan.On1Hr, Fan.On1Min, Fan.Dur1Min, Fan.Dur1Sec );
+    tmpOff2 = mySecs(0, Fan.On1Hr, Fan.On1Min, 0) + mySecs(0, 0, Fan.Dur1Min, Fan.Dur1Sec);
+    if (tmpOff2 > daysec)
+    {
+      tmpOff2 -= daysec;
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    else
+    {
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    sprintf_P(buf, PSTR("Fan    1_On %02d:%02d.00 Off %02d:%02d.%02d "), Fan.On1Hr, Fan.On1Min, hr, mn, tmpOff2);
     if (Fan.OnDay & 1 << Sun)
     {
       strcat(buf, "Sun ");
@@ -5678,7 +5792,23 @@ void listActiveAlarms()
     Serial.println();
   }
   if (Fan.Enable & 0x0F) {
-    sprintf_P(buf, PSTR("Fan    2_On %02d:%02d Off %02d:%02d "), Fan.On2Hr, Fan.On2Min, Fan.Dur2Min, Fan.Dur2Sec );
+    tmpOff2 = mySecs(0, Fan.On2Hr, Fan.On2Min, 0) + mySecs(0, 0, Fan.Dur2Min, Fan.Dur2Sec);
+    if (tmpOff2 > daysec)
+    {
+      tmpOff2 -= daysec;
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    else
+    {
+      hr = (tmpOff2 / 3600UL);
+      tmpOff2 -= (hr * 3600UL);
+      mn = (tmpOff2 / 60UL);
+      tmpOff2 -= (mn * 60UL);
+    }
+    sprintf_P(buf, PSTR("Fan    2_On %02d:%02d.00 Off %02d:%02d.%02d "), Fan.On2Hr, Fan.On2Min, hr, mn, tmpOff2);
     if (Fan.OnDay2 & 1 << Sun)
     {
       strcat(buf, "Sun ");
