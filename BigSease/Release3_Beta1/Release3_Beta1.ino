@@ -517,7 +517,7 @@ void loop()                                                                     
     updateTimeDate();                                                                                           //
   }  //                                                                                                         //
   if ((AutoDim) != 0) { //                                                                                      //
-    if (currentMillis - millisDim > TouchDelay * 1000) {  //                                                    //
+    if (currentMillis - millisDim > TouchDelay * 1000UL) {  //                                                    //
       myGLCD.setBrightness((AutoDim - 1) * 2);                                                                  //
 #if Auxdisp                                                                                                     //
       lcd.setBacklight(LOW);                                                                                    //
