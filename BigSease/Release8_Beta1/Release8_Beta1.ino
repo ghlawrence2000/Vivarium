@@ -4,8 +4,8 @@
 //                          everything else was sourced by David Sease, aka Bigsease30                          //
 //                                       Written for Arduino Mega 2560                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                               VERSION:  27/02/15 06.10GMT                                    //
-//                                              Development Version Release6_Beta1                              //
+//                                               VERSION:  10/03/15 14.40GMT                                    //
+//                                              Development Version Release8_Beta1                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               CODE ORDER:                                                    //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,7 +117,6 @@
 #endif //                                                                                                       //
 #include <EEPROM.h>                // used to store and retrieve settings from memory                           //
 #include <UTFT.h>                  // used to interface with the TFT display                                    //
-#include <UTFT_DLB.h>              // used to interface with the TFT display AND nice fonts                     //
 #include <UTouch.h>                // used to interface with the touch controller on the TFT display            //
 #include <SdFat.h>                 // used to access the SD card                                                //
 #include <UTFT_SdRaw.h>            // used to read .raw images from the SD card                                 //
@@ -131,14 +130,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                       Initiate Screen, Touch, Imaging and Fonts                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-UTFT_DLB myGLCD(CPLD, 38, 39, 40, 41); // start up an instance of the TFT screen                                    //
+UTFT myGLCD(CPLD, 38, 39, 40, 41); // start up an instance of the TFT screen                                    //
 UTouch  myTouch( 6, 5, 4, 3, 2);        // start up an instance of for touch                                    //
 UTFT_SdRaw myFiles(&myGLCD);            // start up an instance to read images from SD                          //
 #if Auxdisp                                                                                                     //
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  //  Auxiliary lcdC*lcdR  (16*2)                 //
 #endif                                                                                                          //
 SdFat sd;                               // start up as instance of SD                                           //
-extern uint8_t SmallFont[];                                                                                     //
 extern uint8_t Sinclair_S[];                                                                                    //
 extern uint8_t arial_bold[];                                                                                    //
 extern uint8_t Ubuntubold[];                                                                                    //
@@ -184,7 +182,7 @@ DallasTemperature sensors(&oneWire);                                            
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                   Time                                                       //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if DS1307 ==1                                                                                                  //
+#if DS1307                                                                                                      //
 RTC_DS1307 rtc;                                                                                                 //
 #else                                                                                                           //
 RTC_Millis rtc;                                                                                                 //
@@ -249,7 +247,7 @@ void setup()                                                                    
 { //                                                                                                            //
 #if debug                                                                                                       //
   // start serial port                                                                                          //
-  Serial.begin(19200);                                                                                          //
+  Serial.begin(115200);                                                                                          //
 #endif                                                                                                          //
   // Set default values for the first ever run                                                                  //
   firstRunSetup();                                                                                              //
@@ -327,7 +325,7 @@ void setup()                                                                    
   sensors.begin();                                                                                              //
 #if debug                                                                                                       //
   // locate DS18B20 temperature devices on the bus                                                              //
-  Serial.print(F("Locating Dallas 1820 devices... "));                                                          //
+  Serial.print(F("Locating Dallas 18B20 devices... "));                                                         //
   Serial.print(F("Found "));                                                                                    //
   Serial.print(sensors.getDeviceCount());                                                                       //
   Serial.println(F("."));                                                                                       //
@@ -370,18 +368,20 @@ void setup()                                                                    
   char buf[6];                                                                                                  //
   lcd.begin ( lcdC, lcdR );                                                                                     //
   lcd.clear ( );                                                                                                //
+  lcd.setBacklight(LOW);                                                                                    //
   if (temp1Lo != 65535)                                                                                         //
   { //                                                                                                          //
     lcd.setCursor(0, 0);                                                                                        //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf((temp1Lo / 100.00) , 4, 1, buf);                                                                  //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = ((((temp1Lo / 100.00) - 32.00) / 9.00) * 5.00);                                           //
-      dtostrf(tmptemp , 4, 1, buf);                                                                             //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf((temp1Lo / 100.00) , 4, 1, buf);                                                                  //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = ((((temp1Lo / 100.00) - 32.00) / 9.00) * 5.00);                                           //
+    //      dtostrf(tmptemp , 4, 1, buf);                                                                             //
+    //    } //                                                                                                        //
+    tempfc((temp1Lo / 100.00), buf);
     lcd.print(buf);                                                                                             //
   } //                                                                                                          //
   else                                                                                                          //
@@ -391,15 +391,16 @@ void setup()                                                                    
   lcd.print(F("/"));                                                                                            //
   if (temp1Hi != 0)                                                                                             //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf((temp1Hi / 100.00) , 4, 1, buf);                                                                  //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = ((((temp1Hi / 100.00) - 32.00) / 9.00) * 5.00);                                           //
-      dtostrf(tmptemp , 4, 1, buf);                                                                             //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf((temp1Hi / 100.00) , 4, 1, buf);                                                                  //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = ((((temp1Hi / 100.00) - 32.00) / 9.00) * 5.00);                                           //
+    //      dtostrf(tmptemp , 4, 1, buf);                                                                             //
+    //    } //                                                                                                        //
+    tempfc((temp1Hi / 100.00), buf);
     lcd.print(buf);                                                                                             //
   } //                                                                                                          //
   lcd.setCursor(15, 0);                                                                                         //
@@ -495,7 +496,7 @@ void setup()                                                                    
   myFiles.loadcpld(230, 40, 378, 268, "Logo.raw", 0, 4);  // <==== Write to writepage 0                         //
   myFiles.loadcpld(340, 360, 149, 47, "Copy.raw", 0, 4);  // <==== Write to writepage 0                         //
   myGLCD.setDisplayPage(0);                               // <==== Display writepage 0                          //
-  myFiles.loadcpld(0, 0, 800, 480, "1Homea.raw", 1, 2);                                                          //
+  myFiles.loadcpld(0, 0, 800, 480, "1Home.raw", 1, 2);                                                          //
   myFiles.loadcpld(0, 0, 800, 480, "2Lights.raw", 2, 2);                                                        //
   myFiles.loadcpld(0, 0, 800, 480, "3TempGHL.raw", 3, 2);                                                       //
   if (tempUnits == 0xF0)                                                                                        //
@@ -512,14 +513,6 @@ void setup()                                                                    
   myFiles.loadcpld(0, 0, 800, 480, "7Clock.raw", 5, 2);                                                         //
   myFiles.loadcpld(0, 0, 800, 480, "8Screen.raw", 6, 2);                                                        //
 #endif                                                                                                          //
-  // display home screen                                                                                        //
-  screenHome();                                                                                                 //
-  millisDim = millis();                                                                                         //
-#if debug                                                                                                       //
-  Serial.print(F("Init time "));                                                                                //
-  Serial.print(millisDim - performance);                                                                        //
-  Serial.println(F(" ms"));                                                                                     //
-#endif                                                                                                          //
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                                        Take initial readings of sensors                                    //
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -528,14 +521,26 @@ void setup()                                                                    
   tempRead(temp1, temp2, temp3);                                                                                //
   sensors.setWaitForConversion(false);  // makes it async (no more waiting)                                     //
   humRead(hum1);                                                                                                //
-  Serial.println(F("Initial Sensor Readings :-"));
-  Serial.print(temp1);
-  Serial.print(" ");
-  Serial.print(temp2);
-  Serial.print(" ");
-  Serial.print(temp3);
-  Serial.print(" ");
-  Serial.println(hum1);
+#if debug                                                                                                       //
+  Serial.println(F("Initial Sensor Readings :-"));                                                              //
+  Serial.print(temp1);                                                                                          //
+  Serial.print(" ");                                                                                            //
+  Serial.print(temp2);                                                                                          //
+  Serial.print(" ");                                                                                            //
+  Serial.print(temp3);                                                                                          //
+  Serial.print(" ");                                                                                            //
+  Serial.println(hum1);                                                                                         //
+#endif                                                                                                          //
+  // display home screen                                                                                        //
+  screenHome();                                                                                                 //
+  lcd.setBacklight(HIGH);                                                                                    //
+
+  millisDim = millis();                                                                                         //
+#if debug                                                                                                       //
+  Serial.print(F("Init time "));                                                                                //
+  Serial.print(millisDim - performance);                                                                        //
+  Serial.println(F(" ms"));                                                                                     //
+#endif                                                                                                          //
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 } //                                                                                                            //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -603,12 +608,12 @@ void loop()                                                                     
   unsigned long rightNow = now();  // Get the time in seconds (since 1970)                                      //
   if ((rightNow - humidTime) >= 2) { //                                                                         //
     float tmphum;                                                                                               //
+    char hum[6];                                                                                            //
     humRead(tmphum);                                                                                            //
     if (hum1 != tmphum) { //                                                                                    //
-      hum1 = tmphum;                                                                                            //
       if (hum1 > 28.0 && hum1 < 100.0)                                                                          //
       { //                                                                                                      //
-        char hum[6];                                                                                            //
+        hum1 = tmphum;                                                                                            //
         dtostrf(hum1, 4, 1, hum);                                                                               //
         if ((hum1 * 100.0) < hum1Lo)                                                                            //
         { //                                                                                                    //
@@ -630,12 +635,12 @@ void loop()                                                                     
         } //                                                                                                    //
 #if debug                                                                                                       //
         Serial.print(F("Internal humidity update: "));                                                          //
-        Serial.println(hum1);                                                                                   //
+        Serial.println(hum);                                                                                   //
 #endif                                                                                                          //
         if (dispScreen == 1)                                                                                    //
         { //                                                                                                    //
-          char hum[6];                                                                                          //
-          dtostrf(hum1, 4, 1, hum);                                                                             //
+          //char hum[6];                                                                                          //
+          //dtostrf(hum1, 4, 1, hum);                                                                             //
 #if Auxdisp                                                                                                     //
           lcd.setCursor(11, 1);                                                                                 //
           lcd.print(hum);                                                                                       //
@@ -644,7 +649,7 @@ void loop()                                                                     
           myGLCD.print(hum, 425, 405);                                                                          //
 #if debug                                                                                                       //
           Serial.print(F("Screen (Home) humidity update: "));                                                   //
-          Serial.println(hum1);                                                                                 //
+          Serial.println(hum);                                                                                 //
 #endif                                                                                                          //
         } //                                                                                                    //
       } //                                                                                                      //
@@ -655,30 +660,31 @@ void loop()                                                                     
     { //                                                                                                        //
       ubuntuRed();                                                                                              //
     } //                                                                                                        //
-    char sensor[6] = "     ";                                                                                   //
+    char sensor[6];                                                                                   //
     float tmptemp1, tmptemp2, tmptemp3;                                                                         //
     tempRead(tmptemp1, tmptemp2, tmptemp3);                                                                     //
     if (temp1 != tmptemp1)                                                                                      //
     { //                                                                                                        //
-      temp1 = tmptemp1;                                                                                         //
-      if (temp1 > 28.0 && temp1 < 185.0)                                                                        //
+      if (tmptemp1 != 0.0)                                                                        //
       { //                                                                                                      //
-        dtostrf(temp1, 4 , 1, sensor);                                                                          //
+        temp1 = tmptemp1;                                                                                       //
+        //dtostrf(temp1, 4 , 1, sensor);                                                                          //
         if ((temp1 * 100.00) < temp1Lo)                                                                         //
         { //                                                                                                    //
           temp1Lo = (temp1 * 100.00);                                                                           //
           EEPROM.writeWord(65, temp1Lo); //                 <- Hi/Lo temp1Lo                                    //
 #if Auxdisp                                                                                                     //
           lcd.setCursor(0, 0);                                                                                  //
-          if (tempUnits == 0xF0)                                                                                //
-          { //                                                                                                  //
-            dtostrf((temp1Lo / 100.00) , 4, 1, sensor);                                                         //
-          } //                                                                                                  //
-          else                                                                                                  //
-          { //                                                                                                  //
-            float tmptemp = ((((temp1Lo / 100.00) - 32.00) / 9.00) * 5.00);                                     //
-            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
-          } //                                                                                                  //
+          //          if (tempUnits == 0xF0)                                                                                //
+          //          { //                                                                                                  //
+          //            dtostrf((temp1Lo / 100.00) , 4, 1, sensor);                                                         //
+          //          } //                                                                                                  //
+          //          else                                                                                                  //
+          //          { //                                                                                                  //
+          //            float tmptemp = ((((temp1Lo / 100.00) - 32.00) / 9.00) * 5.00);                                     //
+          //            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
+          //          } //                                                                                                  //
+          tempfc((temp1Lo / 100.00), sensor);
           lcd.print(sensor);                                                                                    //
 #endif                                                                                                          //
         } //                                                                                                    //
@@ -688,97 +694,113 @@ void loop()                                                                     
           EEPROM.writeWord(67, temp1Hi); //                 <- Hi/Lo temp1Lo                                    //
 #if Auxdisp                                                                                                     //
           lcd.setCursor(5, 0);                                                                                  //
-          if (tempUnits == 0xF0)                                                                                //
-          { //                                                                                                  //
-            dtostrf((temp1Hi / 100.00) , 4, 1, sensor);                                                         //
-          } //                                                                                                  //
-          else                                                                                                  //
-          { //                                                                                                  //
-            float tmptemp = ((((temp1Hi / 100.00) - 32.00) / 9.00) * 5.00);                                     //
-            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
-          } //                                                                                                  //
+          //          if (tempUnits == 0xF0)                                                                                //
+          //          { //                                                                                                  //
+          //            dtostrf((temp1Hi / 100.00) , 4, 1, sensor);                                                         //
+          //          } //                                                                                                  //
+          //          else                                                                                                  //
+          //          { //                                                                                                  //
+          //            float tmptemp = ((((temp1Hi / 100.00) - 32.00) / 9.00) * 5.00);                                     //
+          //            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
+          //          } //                                                                                                  //
+          tempfc((temp1Hi / 100.00), sensor);
           lcd.print(sensor);                                                                                    //
 #endif                                                                                                          //
         } //                                                                                                    //
 #if Auxdisp                                                                                                     //
         lcd.setCursor(11, 0);                                                                                   //
-        if (tempUnits == 0xF0)                                                                                  //
-        { //                                                                                                    //
-          dtostrf(temp1 , 4, 1, sensor);                                                                        //
-        } //                                                                                                    //
-        else                                                                                                    //
-        { //                                                                                                    //
-          float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                    //
-          dtostrf(tmptemp , 4, 1, sensor);                                                                      //
-        } //                                                                                                    //
+        //        if (tempUnits == 0xF0)                                                                                  //
+        //        { //                                                                                                    //
+        //          dtostrf(temp1 , 4, 1, sensor);                                                                        //
+        //        } //                                                                                                    //
+        //        else                                                                                                    //
+        //        { //                                                                                                    //
+        //          float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                    //
+        //          dtostrf(tmptemp , 4, 1, sensor);                                                                      //
+        //        } //                                                                                                    //
+        tempfc(temp1, sensor);
         lcd.print(sensor);                                                                                      //
 #endif                                                                                                          //
-        if (tempUnits == 0xF0)                                                                                  //
-        { //                                                                                                    //
 #if debug//                                                                                                     // 
-          Serial.print(F("Internal temp1 update "));                                                            //
-          Serial.println(temp1);                                                                                //
+        Serial.print(F("Internal temp1 update "));                                                            //
+        Serial.println(sensor);                                                                                //
 #endif                                                                                                          //
-        } //                                                                                                    //
-        else                                                                                                    //
-        { //                                                                                                    //
-          float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                    //
-          dtostrf(tmptemp , 4, 1, sensor);                                                                      //
-#if debug//                                                                                                     // 
-          Serial.print(F("Internal temp1 update "));                                                            //
-          Serial.println(tmptemp);                                                                              //
-#endif                                                                                                          //
-        } //                                                                                                    //
+        //        if (tempUnits == 0xF0)                                                                                  //
+        //        { //                                                                                                    //
+        //#if debug//                                                                                                     //
+        //          Serial.print(F("Internal temp1 update "));                                                            //
+        //          Serial.println(temp1);                                                                                //
+        //#endif                                                                                                          //
+        //        } //                                                                                                    //
+        //        else                                                                                                    //
+        //        { //                                                                                                    //
+        //          float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                    //
+        //          dtostrf(tmptemp , 4, 1, sensor);                                                                      //
+        //#if debug//                                                                                                     //
+        //          Serial.print(F("Internal temp1 update "));                                                            //
+        //          Serial.println(tmptemp);                                                                              //
+        //#endif                                                                                                          //
+        //        } //                                                                                                    //
+
         if (dispScreen == 1)                                                                                    //
         { //                                                                                                    //
-          if (tempUnits == 0xF0)                                                                                //
-          { //                                                                                                  //
-            dtostrf(temp1, 4, 1, sensor);                                                                       //
 #if debug                                                                                                       //
-            Serial.print(F("Screen (Home) temp1 update "));                                                     //
-            Serial.println(temp1);                                                                              //
-#endif                                                                                                          //
-          } //                                                                                                  //
-          else                                                                                                  //
-          { //                                                                                                  //
-            float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                  //
-            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
-#if debug                                                                                                       //
-            Serial.print(F("Screen (Home) temp1 update "));                                                     //
-            Serial.println(tmptemp);                                                                            //
-#endif                                                                                                          //
-          } //                                                                                                  //
+          Serial.print(F("Screen (Home) temp1 update "));                                                     //
+          Serial.println(sensor);                                                                              //
+#endif
+          //          if (tempUnits == 0xF0)                                                                                //
+          //          { //                                                                                                  //
+          //            dtostrf(temp1, 4, 1, sensor);                                                                       //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Home) temp1 update "));                                                     //
+          //            Serial.println(temp1);                                                                              //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
+          //          else                                                                                                  //
+          //          { //                                                                                                  //
+          //            float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                  //
+          //            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Home) temp1 update "));                                                     //
+          //            Serial.println(tmptemp);                                                                            //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
           myGLCD.print(sensor, 411, 316);                                                                       //
         } //                                                                                                    //
         if (dispScreen == 3)                                                                                    //
         { //                                                                                                    //
-          if (tempUnits == 0xF0)                                                                                //
-          { //                                                                                                  //
-            dtostrf(temp1, 4, 1, sensor);                                                                       //
 #if debug                                                                                                       //
-            Serial.print(F("Screen (Temp) temp1 update "));                                                     //
-            Serial.println(temp1);                                                                              //
+          Serial.print(F("Screen (Temp) temp1 update "));                                                     //
+          Serial.println(temp1);                                                                              //
 #endif                                                                                                          //
-          } //                                                                                                  //
-          else                                                                                                  //
-          { //                                                                                                  //
-            float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                  //
-            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
-#if debug                                                                                                       //
-            Serial.print(F("Screen (Temp) temp1 update "));                                                     //
-            Serial.println(tmptemp);                                                                            //
-#endif                                                                                                          //
-          } //                                                                                                  //
+
+          //          if (tempUnits == 0xF0)                                                                                //
+          //          { //                                                                                                  //
+          //            dtostrf(temp1, 4, 1, sensor);                                                                       //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Temp) temp1 update "));                                                     //
+          //            Serial.println(temp1);                                                                              //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
+          //          else                                                                                                  //
+          //          { //                                                                                                  //
+          //            float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                  //
+          //            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Temp) temp1 update "));                                                     //
+          //            Serial.println(tmptemp);                                                                            //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
           myGLCD.print(sensor, 55, 215);                                                                        //
         } //                                                                                                    //
       } //                                                                                                      //
     } //                                                                                                        //
     if (temp2 != tmptemp2)                                                                                      //
     { //                                                                                                        //
-      temp2 = tmptemp2;                                                                                         //
-      if (temp2 > 28.0 && temp2 < 185.0)                                                                        //
+      if (tmptemp2 != 0.0)                                                                       //
       { //                                                                                                      //
-        dtostrf(temp2, 4, 1, sensor);                                                                           //
+        temp2 = tmptemp2;                                                                                       //
+        //        dtostrf(temp2, 4, 1, sensor);                                                                           //
         if ((temp2 * 100.0) < temp2Lo)                                                                          //
         { //                                                                                                    //
           temp2Lo = (temp2 * 100.0);                                                                            //
@@ -789,70 +811,80 @@ void loop()                                                                     
           temp2Hi = (temp2 * 100.0);                                                                            //
           EEPROM.writeWord(71, temp2Hi); //                 <- Hi/Lo temp2Hi                                    //
         } //                                                                                                    //
-        if (tempUnits == 0xF0)                                                                                  //
-        { //                                                                                                    //
-#if debug                                                                                                       //
-          Serial.print(F("Internal temp2 update "));                                                            //
-          Serial.println(temp2);                                                                                //
-#endif                                                                                                          //
-        } //                                                                                                    //
-        else                                                                                                    //
-        { //                                                                                                    //
-          float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                    //
-          dtostrf(tmptemp , 4, 1, sensor);                                                                      //
-#if debug                                                                                                       //
-          Serial.print(F("Internal temp2 update "));                                                            //
-          Serial.println(tmptemp);                                                                              //
-#endif                                                                                                          //
-        } //                                                                                                    //
+        //        if (tempUnits == 0xF0)                                                                                  //
+        //        { //                                                                                                    //
+        //#if debug                                                                                                       //
+        //          Serial.print(F("Internal temp2 update "));                                                            //
+        //          Serial.println(temp2);                                                                                //
+        //#endif                                                                                                          //
+        //        } //                                                                                                    //
+        //        else                                                                                                    //
+        //        { //                                                                                                    //
+        //          float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                    //
+        //          dtostrf(tmptemp , 4, 1, sensor);                                                                      //
+        //#if debug                                                                                                       //
+        //          Serial.print(F("Internal temp2 update "));                                                            //
+        //          Serial.println(tmptemp);                                                                              //
+        //#endif                                                                                                          //
+        //        } //                                                                                                    //
+
+        tempfc(temp2, sensor);
         if (dispScreen == 1)                                                                                    //
         { //                                                                                                    //
-          if (tempUnits == 0xF0)                                                                                //
-          { //                                                                                                  //
 #if debug                                                                                                       //
-            Serial.print(F("Screen (Home) temp2 update "));                                                     //
-            Serial.println(temp2);                                                                              //
+          Serial.print(F("Screen (Home) temp2 update "));                                                     //
+          Serial.println(temp2);                                                                              //
 #endif                                                                                                          //
-          } //                                                                                                  //
-          else                                                                                                  //
-          { //                                                                                                  //
-            float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                  //
-            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
-#if debug                                                                                                       //
-            Serial.print(F("Screen (Home) temp2 update "));                                                     //
-            Serial.println(tmptemp);                                                                            //
-#endif                                                                                                          //
-          } //                                                                                                  //
+          //          if (tempUnits == 0xF0)                                                                                //
+          //          { //                                                                                                  //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Home) temp2 update "));                                                     //
+          //            Serial.println(temp2);                                                                              //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
+          //          else                                                                                                  //
+          //          { //                                                                                                  //
+          //            float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                  //
+          //            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Home) temp2 update "));                                                     //
+          //            Serial.println(tmptemp);                                                                            //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
           myGLCD.print(sensor, 537, 316);                                                                       //
         } //                                                                                                    //
         if (dispScreen == 3)                                                                                    //
         { //                                                                                                    //
-          //dtostrf(temp2, 4, 1, sensor);                                                                       //
-          if (tempUnits == 0xF0)                                                                                //
-          { //                                                                                                  //
 #if debug                                                                                                       //
-            Serial.print(F("Screen (Temp) temp2 update "));                                                     //
-            Serial.println(temp2);                                                                              //
+          Serial.print(F("Screen (Temp) temp2 update "));                                                     //
+          Serial.println(temp2);                                                                              //
 #endif                                                                                                          //
-          } //                                                                                                  //
-          else                                                                                                  //
-          { //                                                                                                  //
-            float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                  //
-            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
-#if debug                                                                                                       //
-            Serial.print(F("Screen (Home) temp2 update "));                                                     //
-            Serial.println(tmptemp);                                                                            //
-#endif                                                                                                          // 
-          } //                                                                                                  //
+          //dtostrf(temp2, 4, 1, sensor);                                                                       //
+          //          if (tempUnits == 0xF0)                                                                                //
+          //          { //                                                                                                  //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Temp) temp2 update "));                                                     //
+          //            Serial.println(temp2);                                                                              //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
+          //          else                                                                                                  //
+          //          { //                                                                                                  //
+          //            float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                  //
+          //            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Home) temp2 update "));                                                     //
+          //            Serial.println(tmptemp);                                                                            //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
           myGLCD.print(sensor, 207, 215);                                                                       //
         } //                                                                                                    //
       } //                                                                                                      //
     } //                                                                                                        //
     if (temp3 != tmptemp3) { //                                                                                 //
-      temp3 = tmptemp3;                                                                                         //
-      if (temp3 > 28.0 && temp3 < 185.0)                                                                        //
+      if (tmptemp3 != 0.0)                                                                        //
       { //                                                                                                      //
-        dtostrf(temp3, 4, 1, sensor);                                                                           //
+        temp3 = tmptemp3;                                                                                       //
+        //        dtostrf(temp3, 4, 1, sensor);                                                                           //
         if ((temp3 * 100.0) < temp3Lo)                                                                          //
         { //                                                                                                    //
           temp3Lo = (temp3 * 100.0);                                                                            //
@@ -863,60 +895,69 @@ void loop()                                                                     
           temp3Hi = (temp3 * 100.0);                                                                            //
           EEPROM.writeWord(75, temp3Hi); //                 <- Hi/Lo temp3Lo                                    //
         } //                                                                                                    //
-        if (tempUnits == 0xF0)                                                                                  //
-        { //                                                                                                    //
-#if debug                                                                                                       // 
-          Serial.print(F("Internal temp3 update"));                                                             //
-          Serial.println(temp3);                                                                                //
-#endif                                                                                                          //
-        } //                                                                                                    //
-        else                                                                                                    //
-        { //                                                                                                    //
-          float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                    //
-          dtostrf(tmptemp , 4, 1, sensor);                                                                      //
-#if debug                                                                                                       // 
-          Serial.print(F("Internal temp3 update"));                                                             //
-          Serial.println(tmptemp);                                                                              //
-#endif                                                                                                          //
-        } //                                                                                                    //
+        //        if (tempUnits == 0xF0)                                                                                  //
+        //        { //                                                                                                    //
+        //#if debug                                                                                                       //
+        //          Serial.print(F("Internal temp3 update"));                                                             //
+        //          Serial.println(temp3);                                                                                //
+        //#endif                                                                                                          //
+        //        } //                                                                                                    //
+        //        else                                                                                                    //
+        //        { //                                                                                                    //
+        //          float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                    //
+        //          dtostrf(tmptemp , 4, 1, sensor);                                                                      //
+        //#if debug                                                                                                       //
+        //          Serial.print(F("Internal temp3 update"));                                                             //
+        //          Serial.println(tmptemp);                                                                              //
+        //#endif                                                                                                          //
+        //        } //                                                                                                    //
+        tempfc(temp3, sensor);
         if (dispScreen == 1) //                                                                                 //
         { //                                                                                                    //
-          if (tempUnits == 0xF0)                                                                                //
-          { //                                                                                                  //
 #if debug                                                                                                       // 
-            Serial.print(F("Screen (Home) temp3 update "));                                                     //
-            Serial.println(temp3);                                                                              //
+          Serial.print(F("Screen (Home) temp3 update "));                                                     //
+          Serial.println(temp3);                                                                              //
 #endif                                                                                                          //
-          }                                                                                                     //
-          else                                                                                                  //
-          { //                                                                                                  //
-            float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                  //
-            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
-#if debug                                                                                                       // 
-            Serial.print(F("Screen (Home) temp3 update "));                                                     //
-            Serial.println(tmptemp);                                                                            //
-#endif                                                                                                          //
-          } //                                                                                                  //
+          //          if (tempUnits == 0xF0)                                                                                //
+          //          { //                                                                                                  //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Home) temp3 update "));                                                     //
+          //            Serial.println(temp3);                                                                              //
+          //#endif                                                                                                          //
+          //          }                                                                                                     //
+          //          else                                                                                                  //
+          //          { //                                                                                                  //
+          //            float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                  //
+          //            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Home) temp3 update "));                                                     //
+          //            Serial.println(tmptemp);                                                                            //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
           myGLCD.print(sensor, 668, 316);                                                                       //
         }                                                                                                       //
         if (dispScreen == 3)                                                                                    //
         { //                                                                                                    //
-          if (tempUnits == 0xF0)                                                                                //
-          { //                                                                                                  //
 #if debug                                                                                                       // 
-            Serial.print(F("Screen (Temp) temp3 update "));                                                     //
-            Serial.println(temp3);                                                                              //
+          Serial.print(F("Screen (Temp) temp3 update "));                                                     //
+          Serial.println(temp3);                                                                              //
 #endif                                                                                                          //
-          } //                                                                                                  //
-          else                                                                                                  //
-          { //                                                                                                  //
-            float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                  //
-            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
-#if debug                                                                                                       // 
-            Serial.print(F("Screen (Temp) temp3 update "));                                                     //
-            Serial.println(tmptemp);                                                                            //
-#endif                                                                                                          //
-          } //                                                                                                  //
+          //          if (tempUnits == 0xF0)                                                                                //
+          //          { //                                                                                                  //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Temp) temp3 update "));                                                     //
+          //            Serial.println(temp3);                                                                              //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
+          //          else                                                                                                  //
+          //          { //                                                                                                  //
+          //            float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                  //
+          //            dtostrf(tmptemp , 4, 1, sensor);                                                                    //
+          //#if debug                                                                                                       //
+          //            Serial.print(F("Screen (Temp) temp3 update "));                                                     //
+          //            Serial.println(tmptemp);                                                                            //
+          //#endif                                                                                                          //
+          //          } //                                                                                                  //
           myGLCD.print(sensor, 359, 215);                                                                       //
         } //                                                                                                    //
       } //                                                                                                      //
@@ -948,61 +989,74 @@ void screenHome()  // draw main home screen showing overview info               
   updateTime = false;                                                                                           //
   if (tmpTouchRepeatDelay != TouchRepeatDelay) TouchRepeatDelay = tmpTouchRepeatDelay;                          //
   // Draw Temp to screen                                                                                        //
-  float tmptemp1, tmptemp2, tmptemp3, tmphum;                                                                   //
-  if (temp1 + temp2 + temp3 == 0.0) {                                                                           //
-    tempRead(temp1, temp2, temp3);                                                                              //
-  } //                                                                                                          //
+  //  float tmptemp1, tmptemp2, tmptemp3, tmphum;                                                                   //
+  float tmphum;
+  //  if (temp1 + temp2 + temp3 == 0.0) {                                                                           //
+  //    tempRead(temp1, temp2, temp3);                                                                              //
+  //  } //                                                                                                          //
   unsigned long rightNow = now();                                                                               //
   ubuntuRed();                                                                                                  //
-  char sensor[6] = "     ";                                                                                     //
-  if (tempUnits == 0xF0)                                                                                        //
+  char sensor[6];                                                                                     //
+  //  if (tempUnits == 0xF0)                                                                                        //
+  //  { //                                                                                                          //
+  //    dtostrf(temp1, 4, 1, sensor);                                                                             //
+  //  } //                                                                                                          //
+  //  else                                                                                                          //
+  //  { //                                                                                                          //
+  //    float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                          //
+  //    dtostrf(tmptemp, 4, 1, sensor);                                                                            //
+  //  } //                                                                                                          //
+  if (temp1 != 0.00)                                                                                             //
   { //                                                                                                          //
-    dtostrf(temp1, 4, 1, sensor  );                                                                             //
-  } //                                                                                                          //
-  else                                                                                                          //
+    tempfc(temp1, sensor);
+    myGLCD.print(sensor, 411, 316);                                                                               //
+  }
+  if (temp2 != 0.00)                                                                                             //
   { //                                                                                                          //
-    float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                          //
-    dtostrf(tmptemp , 4, 1, sensor);                                                                            //
-  } //                                                                                                          //
-  myGLCD.print(sensor, 411, 316);                                                                               //
-  if (temp2 != 0.0)                                                                                             //
-  { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf(temp2, 4, 1, sensor);                                                                             //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                        //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf(temp2, 4, 1, sensor);                                                                             //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                        //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc(temp2, sensor);
     myGLCD.print(sensor, 537, 316);                                                                             //
   } //                                                                                                          //
-  if (temp3 != 0.0)                                                                                             //
+  if (temp3 != 0.00)                                                                                             //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf(temp3, 4, 1, sensor);                                                                             //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                        //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf(temp3, 4, 1, sensor);                                                                             //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                        //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc(temp3, sensor);
     myGLCD.print(sensor, 668, 316);                                                                             //
   } //                                                                                                          //
   // Draw Humidity to screen                                                                                    //
-  if (hum1 == 0.0) { //                                                                                         //
-    humRead(hum1);                                                                                              //
-  } //                                                                                                          //
+  //  if (hum1 == 0.0) { //                                                                                         //
+  //    humRead(hum1);                                                                                              //
+  //  } //                                                                                                          //
   if ((rightNow - humidTime) >= 2)                                                                              //
   { //                                                                                                          //
     humRead(tmphum);                                                                                            //
-    hum1 = tmphum;                                                                                              //
   } //                                                                                                          //
-  dtostrf(hum1, 4, 1, sensor);                                                                                  //
-  ubuntuRed();                                                                                                  //
-  myGLCD.print(sensor, 425, 405);                                                                               //
+  if (hum1 != tmphum)                                                                                            //
+  {
+    if ((tmphum >= 15.0) && (tmphum < 100.0))
+    {
+      hum1 = tmphum;
+      dtostrf(hum1, 4, 1, sensor);                                                                                  //
+      ubuntuRed();                                                                                                  //
+      myGLCD.print(sensor, 425, 405);                                                                               //
+    }
+  }
 } //                                                                                                            //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                Lights Screen                                                 //
@@ -1043,147 +1097,158 @@ void screenTemp() //                                                            
   } //                                                                                                          //
   ubuntuRed();                                                                                                  //
   char sensor[6] = "     ";                                                                                     //
-  if (temp1 != 0.0)                                                                                             //
+  if (temp1 != 0.0)                                                                                            //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf(temp1, 4, 1, sensor);                                                                             //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                        //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf(temp1, 4, 1, sensor);                                                                             //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                        //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc(temp1, sensor);
     myGLCD.print(sensor, 55, 215);                                                                              //
   } //                                                                                                          //
-  if (temp2 != 0.0)                                                                                             //
+  if (temp2 != 0.0)                                                                                            //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf(temp2, 4, 1, sensor);                                                                             //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                        //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf(temp2, 4, 1, sensor);                                                                             //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = (((temp2 - 32.00) / 9.00) * 5.00);                                                        //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc(temp2, sensor);
     myGLCD.print(sensor, 207, 215);                                                                             //
   } //                                                                                                          //
   if (temp3 != 0.0)                                                                                             //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf(temp3, 4, 1, sensor);                                                                             //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                        //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf(temp3, 4, 1, sensor);                                                                             //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = (((temp3 - 32.00) / 9.00) * 5.00);                                                        //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc(temp3, sensor);
     myGLCD.print(sensor, 359, 215);                                                                             //
   } //                                                                                                          //
   tmpTouchRepeatDelay = TouchRepeatDelay;                                                                       //
   TouchRepeatDelay = 100;                                                                                       //
-  if (tempUnits == 0xF0)                                                                                        //
-  { //                                                                                                          //
-    dtostrf(heater, 4, 1 , sensor);                                                                             //
-  } //                                                                                                          //
-  else                                                                                                          //
-  { //                                                                                                          //
-    float tmptemp = (((heater - 32.00) / 9.00) * 5.00);                                                         //
-    dtostrf(tmptemp, 4, 1 , sensor);                                                                            //
-  } //                                                                                                          //
+  //  if (tempUnits == 0xF0)                                                                                        //
+  //  { //                                                                                                          //
+  //    dtostrf(heater, 4, 1 , sensor);                                                                             //
+  //  } //                                                                                                          //
+  //  else                                                                                                          //
+  //  { //                                                                                                          //
+  //    float tmptemp = (((heater - 32.00) / 9.00) * 5.00);                                                         //
+  //    dtostrf(tmptemp, 4, 1 , sensor);                                                                            //
+  //  } //                                                                                                          //
+  tempfc(heater, sensor);
   myGLCD.print(sensor, 510, 296);                                                                               //
-  if (tempUnits == 0xF0)                                                                                        //
-  { //                                                                                                          //
-    dtostrf(fan, 4, 1 , sensor);                                                                                //
-  } //                                                                                                          //
-  else                                                                                                          //
-  { //                                                                                                          //
-    float tmptemp = (((fan - 32.00) / 9.00) * 5.00);                                                            //
-    dtostrf(tmptemp, 4, 1 , sensor);                                                                            //
-  } //                                                                                                          //
+  //  if (tempUnits == 0xF0)                                                                                        //
+  //  { //                                                                                                          //
+  //    dtostrf(fan, 4, 1 , sensor);                                                                                //
+  //  } //                                                                                                          //
+  //  else                                                                                                          //
+  //  { //                                                                                                          //
+  //    float tmptemp = (((fan - 32.00) / 9.00) * 5.00);                                                            //
+  //    dtostrf(tmptemp, 4, 1 , sensor);                                                                            //
+  //  } //                                                                                                          //
+  tempfc(fan, sensor);
   myGLCD.print(sensor, 640, 296);                                                                               //
   updateTime = false;                                                                                           //
   myGLCD.setColor(255, 0, 36);                                                                                  //
   myGLCD.setFont(arial_bold);                                                                                   //
   if (temp1Hi != 0)                                                                                             //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf((temp1Hi / 100.00), 4, 1, sensor);                                                                //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = ((((temp1Hi / 100.00) - 32.00) / 9.00) * 5.00);                                           //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf((temp1Hi / 100.00), 4, 1, sensor);                                                                //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = ((((temp1Hi / 100.00) - 32.00) / 9.00) * 5.00);                                           //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc((temp1Hi / 100.00), sensor);
     myGLCD.print(sensor, 106, 304);                                                                             //
   } //                                                                                                          //
   if (temp2Hi != 0)                                                                                             //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf((temp2Hi / 100.00), 4, 1, sensor);                                                                //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = ((((temp2Hi / 100.00) - 32.00) / 9.00) * 5.00);                                           //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf((temp2Hi / 100.00), 4, 1, sensor);                                                                //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = ((((temp2Hi / 100.00) - 32.00) / 9.00) * 5.00);                                           //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc((temp2Hi / 100.0), sensor);
     myGLCD.print(sensor, 258, 304);                                                                             //
   } //                                                                                                          //
   if (temp3Hi != 0)                                                                                             //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf((temp3Hi / 100.00), 4, 1, sensor);                                                                //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = ((((temp3Hi / 100.00) - 32.00) / 9.00) * 5.00);                                           //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf((temp3Hi / 100.00), 4, 1, sensor);                                                                //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = ((((temp3Hi / 100.00) - 32.00) / 9.00) * 5.00);                                           //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc((temp3Hi / 100.00), sensor);
     myGLCD.print(sensor, 410, 304);                                                                             //
   } //                                                                                                          //
   myGLCD.setColor(48, 169, 198);                                                                                //
   if (temp1Lo != 65535)                                                                                         //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf((temp1Lo / 100.00), 4, 1, sensor);                                                                //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = ((((temp1Lo / 100.00) - 32.00) / 9.00) * 5.00);                                           //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf((temp1Lo / 100.00), 4, 1, sensor);                                                                //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = ((((temp1Lo / 100.00) - 32.00) / 9.00) * 5.00);                                           //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc((temp1Lo / 100.00), sensor);
     myGLCD.print(sensor, 35, 304);                                                                              //
   } //                                                                                                          //
   if (temp2Lo != 65535)                                                                                         //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf((temp2Lo / 100.00), 4, 1, sensor);                                                                //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = ((((temp2Lo / 100.00) - 32.00) / 9.00) * 5.00);                                           //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf((temp2Lo / 100.00), 4, 1, sensor);                                                                //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = ((((temp2Lo / 100.00) - 32.00) / 9.00) * 5.00);                                           //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc((temp2Lo / 100.00), sensor);
     myGLCD.print(sensor, 187, 304);                                                                             //
   } //                                                                                                          //
   if (temp3Lo != 65535)                                                                                         //
   { //                                                                                                          //
-    if (tempUnits == 0xF0)                                                                                      //
-    { //                                                                                                        //
-      dtostrf((temp3Lo / 100.00), 4, 1, sensor);                                                                //
-    } //                                                                                                        //
-    else                                                                                                        //
-    { //                                                                                                        //
-      float tmptemp = ((((temp3Lo / 100.00) - 32.00) / 9.00) * 5.00);                                           //
-      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
-    } //                                                                                                        //
+    //    if (tempUnits == 0xF0)                                                                                      //
+    //    { //                                                                                                        //
+    //      dtostrf((temp3Lo / 100.00), 4, 1, sensor);                                                                //
+    //    } //                                                                                                        //
+    //    else                                                                                                        //
+    //    { //                                                                                                        //
+    //      float tmptemp = ((((temp3Lo / 100.00) - 32.00) / 9.00) * 5.00);                                           //
+    //      dtostrf(tmptemp , 4, 1, sensor);                                                                          //
+    //    } //                                                                                                        //
+    tempfc((temp3Lo / 100.00), sensor);
     myGLCD.print(sensor, 339, 304);                                                                             //
   } //                                                                                                          //
 } //                                                                                                            //
@@ -1279,7 +1344,7 @@ void screenScreen() //                                                          
   { //                                                                                                          //
     myGLCD.print("   ", 689, 340);                                                                              //
   } //                                                                                                          //
-  myGLCD.printNumI(HomeDelay, 338, 167, 2);                                                                     //
+  myGLCD.printNumI(HomeDelay, 313, 167, 2);                                                                     //
   myGLCD.printNumI(BackLight, 313, 340, 2);                                                                     //
   tmpTouchRepeatDelay = TouchRepeatDelay;                                                                       //
   TouchRepeatDelay = 150;                                                                                       //
@@ -1395,8 +1460,8 @@ void processMyTouch() //                                                        
         if ((x >= 270) && (x <= 370)) // Clock Page                                                             //
         { //                                                                                                    //
           screenClock();                                                                                        //
-          SetDatePrint(56, 263);                                                                                //
-          SetTimePrint(463, 263);                                                                               //
+          SetDatePrint();                                                                                       //
+          SetTimePrint();                                                                                       //
         } //                                                                                                    //
       } //                                                                                                      //
       if ((x >= 712) && (x <= 779) && (y >= 13) && (y <= 77)) // Screen Page                                    //
@@ -1739,15 +1804,16 @@ void processMyTouch() //                                                        
           if (temp1Lo != 65535)                                                                                 //
           { //                                                                                                  //
             lcd.setCursor(0, 0);                                                                                //
-            if (tempUnits == 0xF0)                                                                              //
-            { //                                                                                                //
-              dtostrf((temp1Lo / 100.00) , 4, 1, buf);                                                          //
-            } //                                                                                                //
-            else                                                                                                //
-            { //                                                                                                //
-              float tmptemp = ((((temp1Lo / 100.00) - 32.00) / 9.00) * 5.00);                                   //
-              dtostrf(tmptemp , 4, 1, buf);                                                                     //
-            } //                                                                                                //
+//            if (tempUnits == 0xF0)                                                                              //
+//            { //                                                                                                //
+//              dtostrf((temp1Lo / 100.00) , 4, 1, buf);                                                          //
+//            } //                                                                                                //
+//            else                                                                                                //
+//            { //                                                                                                //
+//              float tmptemp = ((((temp1Lo / 100.00) - 32.00) / 9.00) * 5.00);                                   //
+//              dtostrf(tmptemp , 4, 1, buf);                                                                     //
+//            } //                                                                                                //
+tempfc((temp1Lo/100.00), buf);
             lcd.print(buf);                                                                                     //
           } //                                                                                                  //
           else                                                                                                  //
@@ -1757,15 +1823,16 @@ void processMyTouch() //                                                        
           lcd.print(F("/"));                                                                                    //
           if (temp1Hi != 0)                                                                                     //
           { //                                                                                                  //
-            if (tempUnits == 0xF0)                                                                              //
-            { //                                                                                                //
-              dtostrf((temp1Hi / 100.00) , 4, 1, buf);                                                          //
-            } //                                                                                                //
-            else                                                                                                //
-            { //                                                                                                //
-              float tmptemp = ((((temp1Hi / 100.00) - 32.00) / 9.00) * 5.00);                                   //
-              dtostrf(tmptemp , 4, 1, buf);                                                                     //
-            } //                                                                                                //
+//            if (tempUnits == 0xF0)                                                                              //
+//            { //                                                                                                //
+//              dtostrf((temp1Hi / 100.00) , 4, 1, buf);                                                          //
+//            } //                                                                                                //
+//            else                                                                                                //
+//            { //                                                                                                //
+//              float tmptemp = ((((temp1Hi / 100.00) - 32.00) / 9.00) * 5.00);                                   //
+//              dtostrf(tmptemp , 4, 1, buf);                                                                     //
+//            } //                                                                                                //
+tempfc((temp1Hi/100.00), buf);
             lcd.print(buf);                                                                                     //
           } //                                                                                                  //
           lcd.setCursor(15, 0);                                                                                 //
@@ -1777,17 +1844,18 @@ void processMyTouch() //                                                        
           { //                                                                                                  //
             lcd.print(F("C"));                                                                                  //
           } //                                                                                                  //
-          if ((temp1 > 28.0) && (temp1 < 185.0))                                                                //
+          if (temp1 != 0.0)                                                               //
           { //                                                                                                  //
-            if (tempUnits == 0xF0)                                                                              //
-            { //                                                                                                //
-              dtostrf(temp1 , 4, 1, buf);                                                                       //
-            } //                                                                                                //
-            else                                                                                                //
-            { //                                                                                                //
-              float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                //
-              dtostrf(tmptemp , 4, 1, buf);                                                                     //
-            } //                                                                                                //
+            //            if (tempUnits == 0xF0)                                                                              //
+            //            { //                                                                                                //
+            //              dtostrf(temp1 , 4, 1, buf);                                                                       //
+            //            } //                                                                                                //
+            //            else                                                                                                //
+            //            { //                                                                                                //
+            //              float tmptemp = (((temp1 - 32.00) / 9.00) * 5.00);                                                //
+            //              dtostrf(tmptemp , 4, 1, buf);                                                                     //
+            //            } //                                                                                                //
+            tempfc(temp1, buf);
             lcd.setCursor(11, 0);                                                                               //
             lcd.print(buf);                                                                                     //
           } //                                                                                                  //
@@ -1835,15 +1903,16 @@ void processMyTouch() //                                                        
           tempHeater -= 0.1;                                                                                    //
         } //                                                                                                    //
         char buf[6];                                                                                            //
-        if (tempUnits == 0xF0)                                                                                  //
-        { //                                                                                                    //
-          dtostrf(tempHeater, 4, 1, buf);                                                                       //
-        } //                                                                                                    //
-        else                                                                                                    //
-        { //                                                                                                    //
-          float tmptemp = (((tempHeater - 32.00) / 9.00) * 5.00);                                               //
-          dtostrf (tmptemp, 4, 1, buf);                                                                         //
-        } //                                                                                                    //
+        //        if (tempUnits == 0xF0)                                                                                  //
+        //        { //                                                                                                    //
+        //          dtostrf(tempHeater, 4, 1, buf);                                                                       //
+        //        } //                                                                                                    //
+        //        else                                                                                                    //
+        //        { //                                                                                                    //
+        //          float tmptemp = (((tempHeater - 32.00) / 9.00) * 5.00);                                               //
+        //          dtostrf (tmptemp, 4, 1, buf);                                                                         //
+        //        } //                                                                                                    //
+        tempfc(tempHeater, buf);
         myGLCD.print(buf, 510, 296);                                                                            //
       } //                                                                                                      //
       if ((x >= 650) && (x < 725))                                                                              //
@@ -1857,15 +1926,16 @@ void processMyTouch() //                                                        
           tempFan -= 0.1;                                                                                       //
         } //                                                                                                    //
         char buf[6];                                                                                            //
-        if (tempUnits == 0xF0)                                                                                  //
-        { //                                                                                                    //
-          dtostrf(tempFan, 4, 1, buf);                                                                          //
-        } //                                                                                                    //
-        else                                                                                                    //
-        { //                                                                                                    //
-          float tmptemp = (((tempFan - 32.00) / 9.00) * 5.00);                                                  //
-          dtostrf (tmptemp, 4, 1, buf);                                                                         //
-        } //                                                                                                    //
+        //        if (tempUnits == 0xF0)                                                                                  //
+        //        { //                                                                                                    //
+        //          dtostrf(tempFan, 4, 1, buf);                                                                          //
+        //        } //                                                                                                    //
+        //        else                                                                                                    //
+        //        { //                                                                                                    //
+        //          float tmptemp = (((tempFan - 32.00) / 9.00) * 5.00);                                                  //
+        //          dtostrf (tmptemp, 4, 1, buf);                                                                         //
+        //        } //                                                                                                    //
+        tempfc(tempFan, buf);
         myGLCD.print(buf, 640, 296);                                                                            //
       } //                                                                                                      //
       break;                                                                                                    //
@@ -2768,437 +2838,437 @@ void processMyTouch() //                                                        
                 Serial.println(F("Mist 1 Hour -1"));                                                            //
 #endif                                                                                                          //
                 if (tempM1.On1Hr > 0)                                                                           //
-                {
-                  tempM1.On1Hr--;
-                }
-                else
-                {
-                  tempM1.On1Hr = 23;
-                }
-                MistTimePrint(tempM1, 1);
-              }
-              break;
-            case 2:
-              if ((tempM1.Enable & 0x0F) == 0x0F) {
-#if debug
-                Serial.println(F("Mist 2 Hour -1"));
-#endif
-                if (tempM1.On2Hr > 0)
-                {
-                  tempM1.On2Hr--;
-                }
-                else
-                {
-                  tempM1.On2Hr = 23;
-                }
-                MistTimePrint(tempM1, 2);
-              }
-              break;
-            case 3:
-              if ((tempM2.Enable & 0xF0) == 0xF0) {
-#if debug
-                Serial.println(F("Mist 3 Hour -1"));
-#endif
-                if (tempM2.On1Hr > 0)
-                {
-                  tempM2.On1Hr--;
-                }
-                else
-                {
-                  tempM2.On1Hr = 23;
-                }
-                MistTimePrint(tempM2, 1);
-              }
-              break;
-            case 4:
-              if ((tempM2.Enable & 0x0F) == 0x0F) {
-#if debug
-                Serial.println(F("Mist 4 Hour -1"));
-#endif
-                if (tempM2.On2Hr > 0)
-                {
-                  tempM2.On2Hr--;
-                }
-                else
-                {
-                  tempM2.On2Hr = 23;
-                }
-                MistTimePrint(tempM2, 2);
-              }
-              break;
-          }
-        }
-        if ((x >= 368) && (x < 422))
-        { // Min -1
-          switch (mistScreen)
-          {
-            case 1:
-              if ((tempM1.Enable & 0xF0) == 0xF0) {
-#if debug
-                Serial.println(F("Mist 1 Min -1"));
-#endif
-                if (tempM1.On1Min > 0)
-                {
-                  tempM1.On1Min--;
-                }
-                else
-                {
-                  tempM1.On1Min = 59;
-                }
-                MistTimePrint(tempM1, 1);
-              }
-              break;
-            case 2:
-              if ((tempM1.Enable & 0x0F) == 0x0F) {
-#if debug
-                Serial.println(F("Mist 2 Min -1"));
-#endif
-                if (tempM1.On2Min > 0)
-                {
-                  tempM1.On2Min--;
-                }
-                else
-                {
-                  tempM1.On2Min = 59;
-                }
-                MistTimePrint(tempM1, 2);
-              }
-              break;
-            case 3:
-              if ((tempM2.Enable & 0xF0) == 0xF0) {
-#if debug
-                Serial.println(F("Mist 3 Min -1"));
-#endif
-                if (tempM2.On1Min > 0)
-                {
-                  tempM2.On1Min--;
-                }
-                else
-                {
-                  tempM2.On1Min = 59;
-                }
-                MistTimePrint(tempM2, 1);
-              }
-              break;
-            case 4:
-              if ((tempM2.Enable & 0x0F) == 0x0F) {
-#if debug
-                Serial.println(F("Mist 4 Min -1"));
-#endif
-                if (tempM2.On2Min > 0)
-                {
-                  tempM2.On2Min--;
-                }
-                else
-                {
-                  tempM2.On2Min = 59;
-                }
-                MistTimePrint(tempM2, 2);
-              }
-              break;
-          }
-        }
-        if ((x >= 516) && (x < 570))
-        { // Min -1
-          switch (mistScreen)
-          {
-            case 1:
-              if ((tempM1.Enable & 0xF0) == 0xF0) {
-#if debug
-                Serial.println(F("Mist 1 Min -1"));
-#endif
-                if (tempM1.Dur1Min > 0)
-                {
-                  tempM1.Dur1Min--;
-                }
-                else
-                {
-                  tempM1.Dur1Min = 59;
-                }
-                MistTimePrint(tempM1, 1);
-              }
-              break;
-            case 2:
-              if ((tempM1.Enable & 0x0F) == 0x0F) {
-#if debug
-                Serial.println(F("Mist 2 Min -1"));
-#endif
-                if (tempM1.Dur2Min > 0)
-                {
-                  tempM1.Dur2Min--;
-                }
-                else
-                {
-                  tempM1.Dur2Min = 59;
-                }
-                MistTimePrint(tempM1, 2);
-              }
-              break;
-            case 3:
-              if ((tempM2.Enable & 0xF0) == 0xF0) {
-#if debug
-                Serial.println(F("Mist 3 Min -1"));
-#endif
-                if (tempM2.Dur1Min > 0)
-                {
-                  tempM2.Dur1Min--;
-                }
-                else
-                {
-                  tempM2.Dur1Min = 59;
-                }
-                MistTimePrint(tempM2, 1);
-              }
-              break;
-            case 4:
-              if ((tempM2.Enable & 0x0F) == 0x0F) {
-#if debug
-                Serial.println(F("Mist 4 Min -1"));
-#endif
-                if (tempM2.Dur2Min > 0)
-                {
-                  tempM2.Dur2Min--;
-                }
-                else
-                {
-                  tempM2.Dur2Min = 59;
-                }
-                MistTimePrint(tempM2, 2);
-              }
-              break;
-          }
-        }
-        if ((x >= 647) && (x < 701))
-        { // Sec -1
-          switch (mistScreen)
-          {
-            case 1:
-              if ((tempM1.Enable & 0xF0) == 0xF0) {
-#if debug
-                Serial.println(F("Mist 1 Sec -1"));
-#endif
-                if (tempM1.Dur1Sec > 0)
-                {
-                  tempM1.Dur1Sec--;
-                }
-                else
-                {
-                  tempM1.Dur1Sec = 59;
-                }
-                MistTimePrint(tempM1, 1);
-              }
-              break;
-            case 2:
-              if ((tempM1.Enable & 0x0F) == 0x0F) {
-#if debug
-                Serial.println(F("Mist 2 Sec -1"));
-#endif
-                if (tempM1.Dur2Sec > 0)
-                {
-                  tempM1.Dur2Sec--;
-                }
-                else
-                {
-                  tempM1.Dur2Sec = 59;
-                }
-                MistTimePrint(tempM1, 2);
-              }
-              break;
-            case 3:
-              if ((tempM2.Enable & 0xF0) == 0xF0) {
-#if debug
-                Serial.println(F("Mist 3 Sec -1"));
-#endif
-                if (tempM2.Dur1Sec > 0)
-                {
-                  tempM2.Dur1Sec--;
-                }
-                else
-                {
-                  tempM2.Dur1Sec = 59;
-                }
-                MistTimePrint(tempM2, 1);
-              }
-              break;
-            case 4:
-              if ((tempM2.Enable & 0x0F) == 0x0F) {
-#if debug
-                Serial.println(F("Mist 4 Sec -1"));
-#endif
-                if (tempM2.Dur2Sec > 0)
-                {
-                  tempM2.Dur2Sec--;
-                }
-                else
-                {
-                  tempM2.Dur2Sec = 59;
-                }
-                MistTimePrint(tempM2, 2);
-              }
-              break;
-          }
-        }
-      }
-      if ((y >= 345) && (y < 403)) // Day of week row
-      {
-        if ((x >= 201) and (x < 261))
-        {
-          switch (mistScreen)
-          {
-            case 1:
-              if ((tempM1.Enable & 0xF0) == 0xF0) {
-                if ((tempM1.OnDay & (1 << Sun)) == (1 << Sun)) {
-#if debug
-                  Serial.println(F("Mist 1 Sun On"));
-#endif
-                  tempM1.OnDay = (tempM1.OnDay & ~ (1 << Sun));
-                }
-                else
-                {
-#if debug
-                  Serial.println(F("Mist 1 Sun Off"));
-#endif
-                  tempM1.OnDay = (tempM1.OnDay | (1 << Sun));
-                }
-              }
-              break;
-            case 2:
-              if ((tempM1.Enable & 0x0F) == 0x0F) {
-                if ((tempM1.OnDay2 & (1 << Sun)) == (1 << Sun)) {
-#if debug
-                  Serial.println(F("Mist 2 Sun On"));
-#endif
-                  tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Sun));
-                }
-                else
-                {
-#if debug
-                  Serial.println(F("Mist 2 Sun Off"));
-#endif
-                  tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Sun));
-                }
-              }
-              break;
-            case 3:
-              if ((tempM2.Enable & 0xF0) == 0xF0) {
-                if ((tempM2.OnDay & (1 << Sun)) == (1 << Sun)) {
-#if debug
-                  Serial.println(F("Mist 3 Sun On"));
-#endif
-                  tempM2.OnDay = (tempM2.OnDay & ~ (1 << Sun));
-                }
-                else
-                {
-#if debug
-                  Serial.println(F("Mist 3 Sun Off"));
-#endif
-                  tempM2.OnDay = (tempM2.OnDay | (1 << Sun));
-                }
-              }
-              break;
-            case 4:
-              if ((tempM2.Enable & 0x0F) == 0x0F) {
-                if ((tempM2.OnDay2 & (1 << Sun)) == (1 << Sun)) {
-#if debug
-                  Serial.println(F("Mist 4 Sun On"));
-#endif
-                  tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Sun));
-                }
-                else
-                {
-#if debug
-                  Serial.println(F("Mist 4 Sun Off"));
-#endif
-                  tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Sun));
-                }
-              }
-              break;
-          }
-        }
-        if ((x >= 277) and (x < 336))
-        {
-          if (mistScreen == 1)
-          {
-            if ((tempM1.Enable & 0xF0) == 0xF0) {
-              if ((tempM1.OnDay & (1 << Mon)) == (1 << Mon)) {
-#if debug
-                Serial.println(F("Mist 1 Mon On"));
-#endif
-                tempM1.OnDay = (tempM1.OnDay & ~ (1 << Mon));
-              }
-              else
-              {
-#if debug
-                Serial.println(F("Mist 1 Mon Off"));
-#endif
-                tempM1.OnDay = (tempM1.OnDay | (1 << Mon));
-              }
-            }
-          }
-          if (mistScreen == 2)
-          {
-            if ((tempM1.Enable & 0x0F) == 0x0F) {
-              if ((tempM1.OnDay2 & (1 << Mon)) == (1 << Mon)) {
-#if debug
-                Serial.println(F("Mist 2 Mon On"));
-#endif
-                tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Mon));
-              }
-              else
-              {
-#if debug
-                Serial.println(F("Mist 2 Mon Off"));
-#endif
-                tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Mon));
-              }
-            }
-          }
-          if (mistScreen == 3)
-          {
-            if ((tempM2.Enable & 0xF0) == 0xF0) {
-              if ((tempM2.OnDay & (1 << Mon)) == (1 << Mon)) {
-#if debug
-                Serial.println(F("Mist 3 Mon On"));
-#endif
-                tempM2.OnDay = (tempM2.OnDay & ~ (1 << Mon));
-              }
-              else
-              {
-#if debug
-                Serial.println(F("Mist 3 Mon Off"));
-#endif
-                tempM2.OnDay = (tempM2.OnDay | (1 << Mon));
-              }
-            }
-          }
-          if (mistScreen == 4)
-          {
-            if ((tempM2.Enable & 0x0F) == 0x0F) {
-              if ((tempM2.OnDay2 & (1 << Mon)) == (1 << Mon)) {
-#if debug
-                Serial.println(F("Mist 4 Mon On"));
-#endif
-                tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Mon));
-              }
-              else
-              {
-#if debug
-                Serial.println(F("Mist 4 Mon Off"));
-#endif
-                tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Mon));
-              }
-            }
-          }
-        }
-        if ((x >= 350) and (x < 411))
-        {
-          if (mistScreen == 1)
-          {
-            if ((tempM1.Enable & 0xF0) == 0xF0) {
-              if ((tempM1.OnDay & (1 << Tue)) == (1 << Tue)) {
-#if debug
-                Serial.println(F("Mist 1 Tue On"));
-#endif
+                { //                                                                                            //
+                  tempM1.On1Hr--;                                                                               //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM1.On1Hr = 23;                                                                            //
+                } //                                                                                            //
+                MistTimePrint(tempM1, 1);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 2:                                                                                             //
+              if ((tempM1.Enable & 0x0F) == 0x0F) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 2 Hour -1"));                                                            //
+#endif                                                                                                          //
+                if (tempM1.On2Hr > 0)                                                                           //
+                { //                                                                                            //
+                  tempM1.On2Hr--;                                                                               //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM1.On2Hr = 23;                                                                            //
+                } //                                                                                            //
+                MistTimePrint(tempM1, 2);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 3:                                                                                             //
+              if ((tempM2.Enable & 0xF0) == 0xF0) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 3 Hour -1"));                                                            //
+#endif                                                                                                          //
+                if (tempM2.On1Hr > 0)                                                                           //
+                { //                                                                                            //
+                  tempM2.On1Hr--;                                                                               //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM2.On1Hr = 23;                                                                            //
+                } //                                                                                            //
+                MistTimePrint(tempM2, 1);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 4:                                                                                             //
+              if ((tempM2.Enable & 0x0F) == 0x0F) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 4 Hour -1"));                                                            //
+#endif                                                                                                          //
+                if (tempM2.On2Hr > 0)                                                                           //
+                { //                                                                                            //
+                  tempM2.On2Hr--;                                                                               //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM2.On2Hr = 23;                                                                            //
+                } //                                                                                            //
+                MistTimePrint(tempM2, 2);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+          } //                                                                                                  //
+        } //                                                                                                    //
+        if ((x >= 368) && (x < 422))                                                                            //
+        { // Min -1                                                                                             //
+          switch (mistScreen)                                                                                   //
+          { //                                                                                                  //
+            case 1:                                                                                             //
+              if ((tempM1.Enable & 0xF0) == 0xF0) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 1 Min -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM1.On1Min > 0)                                                                          //
+                { //                                                                                            //
+                  tempM1.On1Min--;                                                                              //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM1.On1Min = 59;                                                                           //
+                } //                                                                                            //
+                MistTimePrint(tempM1, 1);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 2:                                                                                             //
+              if ((tempM1.Enable & 0x0F) == 0x0F) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 2 Min -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM1.On2Min > 0)                                                                          //
+                { //                                                                                            //
+                  tempM1.On2Min--;                                                                              //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM1.On2Min = 59;                                                                           //
+                } //                                                                                            //
+                MistTimePrint(tempM1, 2);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 3:                                                                                             //
+              if ((tempM2.Enable & 0xF0) == 0xF0) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 3 Min -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM2.On1Min > 0)                                                                          //
+                { //                                                                                            //
+                  tempM2.On1Min--;                                                                              //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM2.On1Min = 59;                                                                           //
+                } //                                                                                            //
+                MistTimePrint(tempM2, 1);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 4:                                                                                             //
+              if ((tempM2.Enable & 0x0F) == 0x0F) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 4 Min -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM2.On2Min > 0)                                                                          //
+                { //                                                                                            //
+                  tempM2.On2Min--;                                                                              //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM2.On2Min = 59;                                                                           //
+                } //                                                                                            //
+                MistTimePrint(tempM2, 2);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+          } //                                                                                                  //
+        } //                                                                                                    //
+        if ((x >= 516) && (x < 570))                                                                            //
+        { // Min -1                                                                                             //
+          switch (mistScreen)                                                                                   //
+          { //                                                                                                  //
+            case 1:                                                                                             //
+              if ((tempM1.Enable & 0xF0) == 0xF0) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 1 Min -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM1.Dur1Min > 0)                                                                         //
+                { //                                                                                            //
+                  tempM1.Dur1Min--;                                                                             //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM1.Dur1Min = 59;                                                                          //
+                } //                                                                                            //
+                MistTimePrint(tempM1, 1);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 2:                                                                                             //
+              if ((tempM1.Enable & 0x0F) == 0x0F) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 2 Min -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM1.Dur2Min > 0)                                                                         //
+                { //                                                                                            //
+                  tempM1.Dur2Min--;                                                                             //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM1.Dur2Min = 59;                                                                          //
+                } //                                                                                            //
+                MistTimePrint(tempM1, 2);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 3:                                                                                             //
+              if ((tempM2.Enable & 0xF0) == 0xF0) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 3 Min -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM2.Dur1Min > 0)                                                                         //
+                { //                                                                                            //
+                  tempM2.Dur1Min--;                                                                             //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM2.Dur1Min = 59;                                                                          //
+                } //                                                                                            //
+                MistTimePrint(tempM2, 1);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 4:                                                                                             //
+              if ((tempM2.Enable & 0x0F) == 0x0F) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 4 Min -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM2.Dur2Min > 0)                                                                         //
+                { //                                                                                            //
+                  tempM2.Dur2Min--;                                                                             //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM2.Dur2Min = 59;                                                                          //
+                } //                                                                                            //
+                MistTimePrint(tempM2, 2);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+          } //                                                                                                  //
+        } //                                                                                                    //
+        if ((x >= 647) && (x < 701))                                                                            //
+        { // Sec -1                                                                                             //
+          switch (mistScreen)                                                                                   //
+          { //                                                                                                  //
+            case 1:                                                                                             //
+              if ((tempM1.Enable & 0xF0) == 0xF0) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 1 Sec -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM1.Dur1Sec > 0)                                                                         //
+                { //                                                                                            //
+                  tempM1.Dur1Sec--;                                                                             //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM1.Dur1Sec = 59;                                                                          //
+                } //                                                                                            //
+                MistTimePrint(tempM1, 1);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 2:                                                                                             //
+              if ((tempM1.Enable & 0x0F) == 0x0F) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 2 Sec -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM1.Dur2Sec > 0)                                                                         //
+                { //                                                                                            //
+                  tempM1.Dur2Sec--;                                                                             //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM1.Dur2Sec = 59;                                                                          //
+                } //                                                                                            //
+                MistTimePrint(tempM1, 2);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 3:                                                                                             //
+              if ((tempM2.Enable & 0xF0) == 0xF0) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 3 Sec -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM2.Dur1Sec > 0)                                                                         //
+                { //                                                                                            //
+                  tempM2.Dur1Sec--;                                                                             //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM2.Dur1Sec = 59;                                                                          //
+                } //                                                                                            //
+                MistTimePrint(tempM2, 1);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 4:                                                                                             //
+              if ((tempM2.Enable & 0x0F) == 0x0F) { //                                                          //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 4 Sec -1"));                                                             //
+#endif                                                                                                          //
+                if (tempM2.Dur2Sec > 0)                                                                         //
+                { //                                                                                            //
+                  tempM2.Dur2Sec--;                                                                             //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+                  tempM2.Dur2Sec = 59;                                                                          //
+                } //                                                                                            //
+                MistTimePrint(tempM2, 2);                                                                       //
+              } //                                                                                              //
+              break;                                                                                            //
+          } //                                                                                                  //
+        } //                                                                                                    //
+      } //                                                                                                      //
+      if ((y >= 345) && (y < 403)) // Day of week row                                                           //
+      { //                                                                                                      //
+        if ((x >= 201) and (x < 261))                                                                           //
+        { //                                                                                                    //
+          switch (mistScreen)                                                                                   //
+          { //                                                                                                  //
+            case 1:                                                                                             //
+              if ((tempM1.Enable & 0xF0) == 0xF0) { //                                                          //
+                if ((tempM1.OnDay & (1 << Sun)) == (1 << Sun)) { //                                             //
+#if debug                                                                                                       //
+                  Serial.println(F("Mist 1 Sun On"));                                                           //
+#endif                                                                                                          //
+                  tempM1.OnDay = (tempM1.OnDay & ~ (1 << Sun));                                                 //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+#if debug                                                                                                       //
+                  Serial.println(F("Mist 1 Sun Off"));                                                          //
+#endif                                                                                                          //
+                  tempM1.OnDay = (tempM1.OnDay | (1 << Sun));                                                   //
+                } //                                                                                            //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 2:                                                                                             //
+              if ((tempM1.Enable & 0x0F) == 0x0F) { //                                                          //
+                if ((tempM1.OnDay2 & (1 << Sun)) == (1 << Sun)) { //                                            //
+#if debug                                                                                                       //
+                  Serial.println(F("Mist 2 Sun On"));                                                           //
+#endif                                                                                                          //
+                  tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Sun));                                               //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+#if debug                                                                                                       //
+                  Serial.println(F("Mist 2 Sun Off"));                                                          //
+#endif                                                                                                          //
+                  tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Sun));                                                 //
+                } //                                                                                            //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 3:                                                                                             //
+              if ((tempM2.Enable & 0xF0) == 0xF0) { //                                                          //
+                if ((tempM2.OnDay & (1 << Sun)) == (1 << Sun)) { //                                             //
+#if debug                                                                                                       //
+                  Serial.println(F("Mist 3 Sun On"));                                                           //
+#endif                                                                                                          //
+                  tempM2.OnDay = (tempM2.OnDay & ~ (1 << Sun));                                                 //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+#if debug                                                                                                       //
+                  Serial.println(F("Mist 3 Sun Off"));                                                          //
+#endif                                                                                                          //
+                  tempM2.OnDay = (tempM2.OnDay | (1 << Sun));                                                   //
+                } //                                                                                            //
+              } //                                                                                              //
+              break;                                                                                            //
+            case 4:                                                                                             //
+              if ((tempM2.Enable & 0x0F) == 0x0F) { //                                                          //
+                if ((tempM2.OnDay2 & (1 << Sun)) == (1 << Sun)) { //                                            //
+#if debug                                                                                                       //
+                  Serial.println(F("Mist 4 Sun On"));                                                           //
+#endif                                                                                                          //
+                  tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Sun));                                               //
+                } //                                                                                            //
+                else                                                                                            //
+                { //                                                                                            //
+#if debug                                                                                                       //
+                  Serial.println(F("Mist 4 Sun Off"));                                                          //
+#endif                                                                                                          //
+                  tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Sun));                                                 //
+                } //                                                                                            //
+              } //                                                                                              //
+              break;                                                                                            //
+          } //                                                                                                  //
+        } //                                                                                                    //
+        if ((x >= 277) and (x < 336))                                                                           //
+        { //                                                                                                    //
+          if (mistScreen == 1)                                                                                  //
+          { //                                                                                                  //
+            if ((tempM1.Enable & 0xF0) == 0xF0) { //                                                            //
+              if ((tempM1.OnDay & (1 << Mon)) == (1 << Mon)) { //                                               //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 1 Mon On"));                                                             //
+#endif                                                                                                          //
+                tempM1.OnDay = (tempM1.OnDay & ~ (1 << Mon));                                                   //
+              } //                                                                                              //
+              else                                                                                              //
+              { //                                                                                              //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 1 Mon Off"));                                                            //
+#endif                                                                                                          //
+                tempM1.OnDay = (tempM1.OnDay | (1 << Mon));                                                     //
+              } //                                                                                              //
+            } //                                                                                                //
+          } //                                                                                                  //
+          if (mistScreen == 2)                                                                                  //
+          { //                                                                                                  //
+            if ((tempM1.Enable & 0x0F) == 0x0F) { //                                                            //
+              if ((tempM1.OnDay2 & (1 << Mon)) == (1 << Mon)) { //                                              //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 2 Mon On"));                                                             //
+#endif                                                                                                          //
+                tempM1.OnDay2 = (tempM1.OnDay2 & ~ (1 << Mon));                                                 //
+              } //                                                                                              //
+              else                                                                                              //
+              { //                                                                                              //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 2 Mon Off"));                                                            //
+#endif                                                                                                          //
+                tempM1.OnDay2 = (tempM1.OnDay2 | (1 << Mon));                                                   //
+              } //                                                                                              //
+            } //                                                                                                //
+          } //                                                                                                  //
+          if (mistScreen == 3)                                                                                  //
+          { //                                                                                                  //
+            if ((tempM2.Enable & 0xF0) == 0xF0) { //                                                            //
+              if ((tempM2.OnDay & (1 << Mon)) == (1 << Mon)) { //                                               //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 3 Mon On"));                                                             //
+#endif                                                                                                          //
+                tempM2.OnDay = (tempM2.OnDay & ~ (1 << Mon));                                                   //
+              } //                                                                                              //
+              else                                                                                              //
+              { //                                                                                              //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 3 Mon Off"));                                                            //
+#endif                                                                                                          //
+                tempM2.OnDay = (tempM2.OnDay | (1 << Mon));                                                     //
+              } //                                                                                              //
+            } //                                                                                                //
+          } //                                                                                                  //
+          if (mistScreen == 4)                                                                                  //
+          { //                                                                                                  //
+            if ((tempM2.Enable & 0x0F) == 0x0F) { //                                                            //
+              if ((tempM2.OnDay2 & (1 << Mon)) == (1 << Mon)) { //                                              //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 4 Mon On"));                                                             //
+#endif                                                                                                          //
+                tempM2.OnDay2 = (tempM2.OnDay2 & ~ (1 << Mon));                                                 //
+              } //                                                                                              //
+              else                                                                                              //
+              { //                                                                                              //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 4 Mon Off"));                                                            //
+#endif                                                                                                          //
+                tempM2.OnDay2 = (tempM2.OnDay2 | (1 << Mon));                                                   //
+              } //                                                                                              //
+            } //                                                                                                //
+          } //                                                                                                  //
+        } //                                                                                                    //
+        if ((x >= 350) and (x < 411))                                                                           //
+        { //                                                                                                    //
+          if (mistScreen == 1)                                                                                  //
+          { //                                                                                                  //
+            if ((tempM1.Enable & 0xF0) == 0xF0) { //                                                            //
+              if ((tempM1.OnDay & (1 << Tue)) == (1 << Tue)) { //                                               //
+#if debug                                                                                                       //
+                Serial.println(F("Mist 1 Tue On"));                                                             //
+#endif                                                                                                          //
                 tempM1.OnDay = (tempM1.OnDay & ~ (1 << Tue));
               }
               else
@@ -4098,8 +4168,8 @@ void processMyTouch() //                                                        
         if ((x >= 665) && (x < 740)) { // 'Seconds'
           // Not implementing second updates....
         }
-        SetDatePrint(56, 263);
-        SetTimePrint(463, 263);
+        SetDatePrint();
+        SetTimePrint();
       }
       if ((y >= 310) && (y < 385)) {  // 'Decrease' row
         if ((x >= 55) && (x < 130)) { // 'Months'
@@ -4107,7 +4177,8 @@ void processMyTouch() //                                                        
           if (tmpRTC.Month > 1)
           {
             tmpRTC.Month --;
-            if ((tmpRTC.Month == 9 || tmpRTC.Month == 4 || tmpRTC.Month == 6 || tmpRTC.Month == 11) && tmpRTC.Day > 30) {
+            if ((tmpRTC.Month == 9 || tmpRTC.Month == 4 || tmpRTC.Month == 6 ||
+                 tmpRTC.Month == 11) && tmpRTC.Day > 30) {
               tmpRTC.Day = 30;
             }
             if (tmpRTC.Month == 2 && tmpRTC.Day > 28) {
@@ -4130,7 +4201,8 @@ void processMyTouch() //                                                        
             if (tmpRTC.Month == 9 || tmpRTC.Month == 4 || tmpRTC.Month == 6 || tmpRTC.Month == 11) {
               tmpRTC.Day = 30;
             }
-            if (tmpRTC.Month == 1 || tmpRTC.Month == 3 || tmpRTC.Month == 5 || tmpRTC.Month == 7 || tmpRTC.Month == 8 || tmpRTC.Month == 10 || tmpRTC.Month == 12 ) {
+            if (tmpRTC.Month == 1 || tmpRTC.Month == 3 || tmpRTC.Month == 5 || tmpRTC.Month == 7 ||
+                tmpRTC.Month == 8 || tmpRTC.Month == 10 || tmpRTC.Month == 12 ) {
               tmpRTC.Day = 31;
             }
             if (tmpRTC.Month == 2) {
@@ -4165,8 +4237,8 @@ void processMyTouch() //                                                        
         if ((x >= 665) && (x < 740)) { // 'Seconds'
           // Not implementing second updates....
         }
-        SetDatePrint(56, 263);
-        SetTimePrint(463, 263);
+        SetDatePrint();
+        SetTimePrint();
       }
       if ((y >= 410) && (y < 445)) { // 'Set' 'Cancel' Row
         if ((x >= 225) && (x < 345)) { //'Set'
@@ -4275,7 +4347,7 @@ void processMyTouch() //                                                        
           }
         }
         myGLCD.setFont(Ubuntubold);
-        myGLCD.printNumI(tempHD, 338, 167, 2);
+        myGLCD.printNumI(tempHD, 313, 167, 2);
         myGLCD.printNumI(BackLight, 313, 340, 2);
       }
       break;
@@ -4315,14 +4387,13 @@ time_t syncProvider()
 ////////////////////////////////////////////////////////////////////////////////////////////
 void updateTimeDate()
 {
-  ubuntuRed();
   time_t timeNow = rtc.now().unixtime();
   // draw date and time
+  myGLCD.setColor(255, 77, 0);
+  myGLCD.setFont(arial_bold);
   if ((hour(timeNow) != prevRTC.Hour) || (minute(timeNow) != prevRTC.Minute) || !updateTime) { //time
     prevRTC.Hour = hour(timeNow);
     prevRTC.Minute = minute(timeNow);
-    byte ampm = isPM(timeNow);
-    int hr_12 = hourFormat12(timeNow);
     printTime(timeNow, 250, 2);
   }
   if ((day(timeNow) != prevRTC.Day) || (month(timeNow) != prevRTC.Month) ||
@@ -4338,102 +4409,118 @@ void updateTimeDate()
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void printTime(time_t timeNow, int posx, int posy)
 {
-  char tmpTime[8], charT[3];
-  tmpTime[0] = '\0';
-  if (hourFormat12(timeNow) >= 0 && hourFormat12(timeNow) < 10) { //add space
-    strcat(tmpTime, " ");
-    itoa(hourFormat12(timeNow), charT, 10);
-    strcat(tmpTime, charT);
-  }
-  else
-    itoa(hourFormat12(timeNow), tmpTime, 10);
-  strcat(tmpTime, ":");
-  if (minute(timeNow) >= 0 && minute(timeNow) < 10) {
-    strcat(tmpTime, "0");
-    itoa(minute(timeNow), charT, 10);
-    strcat(tmpTime, charT);
-  }
-  else {
-    itoa(minute(timeNow), charT, 10);
-    strcat(tmpTime, charT);
-  }
-  if (isPM(timeNow) == 0) strcat(tmpTime, "am");
-  else strcat(tmpTime, "pm");
-  myGLCD.setColor(255, 77, 0);
-  myGLCD.setFont(arial_bold);
-  myGLCD.print(tmpTime, posx, posy);
+  char buf[10];
+  sprintf_P(buf, PSTR("%2d:%02d%s"), hourFormat12(timeNow), minute(timeNow), isPM(timeNow) < 1 ? "am" : "pm");
+  //
+  //
+  //  char tmpTime[8], charT[3];
+  //  tmpTime[0] = '\0';
+  //  if (hourFormat12(timeNow) >= 0 && hourFormat12(timeNow) < 10) { //add space
+  //    strcat(tmpTime, " ");
+  //    itoa(hourFormat12(timeNow), charT, 10);
+  //    strcat(tmpTime, charT);
+  //  }
+  //  else
+  //    itoa(hourFormat12(timeNow), tmpTime, 10);
+  //  strcat(tmpTime, ":");
+  //  if (minute(timeNow) >= 0 && minute(timeNow) < 10) {
+  //    strcat(tmpTime, "0");
+  //    itoa(minute(timeNow), charT, 10);
+  //    strcat(tmpTime, charT);
+  //  }
+  //  else {
+  //    itoa(minute(timeNow), charT, 10);
+  //    strcat(tmpTime, charT);
+  //  }
+  //  if (isPM(timeNow) == 0) strcat(tmpTime, "am");
+  //  else strcat(tmpTime, "pm");
+  //myGLCD.setColor(255, 77, 0);
+  //myGLCD.setFont(arial_bold);
+  myGLCD.print(buf, posx, posy);
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 void printDate(time_t timeNow, int x, int y)
 {
-  char  chDate[25], tmpChar[5];
-  strcat(chDate, "     ");
-  chDate[0] = '\0';
-  strcat(chDate, Day[weekday(timeNow)]);
-  strcat(chDate, ", ");
-  strcat(chDate, Month[month(timeNow)]);
-  if (day(timeNow) < 10)
-  {
-    strcat(chDate, "  ");
-  }
-  else
-  {
-    strcat(chDate, " ");
-  }
-  itoa(day(timeNow), tmpChar, 10);
-  strcat(chDate, tmpChar);
-  // this line is for omitting year
-  strcat(chDate, "  ");
-  myGLCD.setColor(255, 77, 0);
-  myGLCD.setFont(arial_bold);
-  myGLCD.print(chDate, x, y);            //Display date
+  char buf[13];
+  sprintf_P(buf, PSTR("%s, %s %2d"), Day[weekday(timeNow)], Month[month(timeNow)], day(timeNow));
+  //
+  //  char  chDate[25], tmpChar[5];
+  //  strcat(chDate, "     ");
+  //  chDate[0] = '\0';
+  //  strcat(chDate, Day[weekday(timeNow)]);
+  //  strcat(chDate, ", ");
+  //  strcat(chDate, Month[month(timeNow)]);
+  //  if (day(timeNow) < 10)
+  //  {
+  //    strcat(chDate, "  ");
+  //  }
+  //  else
+  //  {
+  //    strcat(chDate, " ");
+  //  }
+  //  itoa(day(timeNow), tmpChar, 10);
+  //  strcat(chDate, tmpChar);
+  //  // this line is for omitting year
+  //  strcat(chDate, "  ");
+  //myGLCD.setColor(255, 77, 0);
+  //myGLCD.setFont(arial_bold);
+  myGLCD.print(buf, x, y);            //Display date
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                          //
 //                Supporting 'stuff' added by Graham Lawrence                               //
 //                                                                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////
-void SetDatePrint(int x, int y)
+void SetDatePrint()
 {
-  char  chDate[25], tmpChar[5];
-  strcat(chDate, "     ");
-  chDate[0] = '\0';
-  strcat(chDate, Month[tmpRTC.Month]);
-  if (tmpRTC.Day < 10) {
-    strcat(chDate, "   ");
-  }
-  else
-  {
-    strcat(chDate, "  ");
-  }
-  itoa(tmpRTC.Day, tmpChar, 10);
-  strcat(chDate, tmpChar);
-  strcat(chDate, " ");
-  itoa(tmpRTC.Year + 1970, tmpChar, 10);
-  strcat(chDate, tmpChar);
-  myGLCD.setFont(Ubuntubold);
-  myGLCD.print(chDate, x, y);
+  char buf[15];
+  sprintf_P(buf, PSTR("%s  %2d  %4d"), Month[tmpRTC.Month], tmpRTC.Day, (tmpRTC.Year + 1970));
+  //
+  //  char  chDate[25], tmpChar[5];
+  //  strcat(chDate, "     ");
+  //  chDate[0] = '\0';
+  //  strcat(chDate, Month[tmpRTC.Month]);
+  //  if (tmpRTC.Day < 10) {
+  //    strcat(chDate, "   ");
+  //  }
+  //  else
+  //  {
+  //    strcat(chDate, "  ");
+  //  }
+  //  itoa(tmpRTC.Day, tmpChar, 10);
+  //  strcat(chDate, tmpChar);
+  //  strcat(chDate, " ");
+  //  itoa(tmpRTC.Year + 1970, tmpChar, 10);
+  //  strcat(chDate, tmpChar);
+  ubuntuRed();
+  //  myGLCD.setFont(Ubuntubold);
+  myGLCD.print(buf, 56, 263);
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-void SetTimePrint(int x, int y)
+void SetTimePrint()
 {
-  char  chDate[25], tmpChar[5];
-  strcat(chDate, "     ");
-  chDate[0] = '\0';
-  if (tmpRTC.Hour < 10) {
-    strcat(chDate, " ");
-  }
-  itoa(tmpRTC.Hour, tmpChar, 10);
-  strcat(chDate, tmpChar);
-  strcat(chDate, " : ");
-  if (tmpRTC.Minute < 10) {
-    strcat(chDate, "0");
-  }
-  itoa(tmpRTC.Minute, tmpChar, 10);
-  strcat(chDate, tmpChar);
-  strcat(chDate, " .00");
-  myGLCD.setFont(Ubuntubold);
-  myGLCD.print(chDate, x, y);
+  char buf[13];
+  sprintf_P(buf, PSTR("%2d : %02d .00"), tmpRTC.Hour, tmpRTC.Minute);
+  //
+  //  char  chDate[25], tmpChar[5];
+  //
+  //  strcat(chDate, "     ");
+  //  chDate[0] = '\0';
+  //  if (tmpRTC.Hour < 10) {
+  //    strcat(chDate, " ");
+  //  }
+  //  itoa(tmpRTC.Hour, tmpChar, 10);
+  //  strcat(chDate, tmpChar);
+  //  strcat(chDate, " : ");
+  //  if (tmpRTC.Minute < 10) {
+  //    strcat(chDate, "0");
+  //  }
+  //  itoa(tmpRTC.Minute, tmpChar, 10);
+  //  strcat(chDate, tmpChar);
+  //  strcat(chDate, " .00");
+  //  ubuntuRed();
+  //myGLCD.setFont(Ubuntubold);
+  myGLCD.print(buf, 463, 263);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //                         Misting Screen supporting functions                                   //
@@ -4834,24 +4921,23 @@ void DoScreen(byte page, byte screen) {
 void tempRead(float & temp1a, float & temp2a, float & temp3a)
 {
   byte numSensors = sensors.getDeviceCount();
-  temp1a = 0.0, temp2a = 0.0, temp3a = 0.0;
+  temp1a = 0.0;
+  temp2a = 0.0;
+  temp3a = 0.0;
   if (numSensors >= 1)
   {
     temp1a = sensors.getTempFByIndex(0);
-    if (temp1a >= 185.0) temp1a = 0.0;
-    if (temp1a <= 35.0) temp1a = 0.0;
+    if (temp1a == 185.0) temp1a = 0.0;
   }
   if (numSensors >= 2)
   {
     temp2a = sensors.getTempFByIndex(1);
-    if (temp2a >= 185.0) temp2a = 0.0;
-    if (temp2a <= 35.0) temp2a = 0.0;
+    if (temp2a == 185.0) temp2a = 0.0;
   }
-  if (numSensors >= 3)
+  if (numSensors == 3)
   {
     temp3a = sensors.getTempFByIndex(2);
-    if (temp3a >= 185.0) temp3a = 0.0;
-    if (temp3a <= 35.0) temp3a = 0.0;
+    if (temp3a == 185.0) temp3a = 0.0;
   }
   sensors.requestTemperatures();
   tempTime = now();
@@ -4865,6 +4951,10 @@ void humRead(float & hum1a)
   if (chk == DHTLIB_OK) {
     hum1a = DHT.humidity;
     humidTime = now();
+  }
+  else
+  {
+    hum1a = 0.0;
   }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -6146,8 +6236,8 @@ void testRelays()
   if ((fog1ret == 0x10) && (fog2ret == 0x20)) FogOff();
   byte fan1ret = checkRelays(Fan, 1, 1);
   byte fan2ret = checkRelays(Fan, 2, 1);
-  if ((fan1ret == 0x1F) || (fan2ret == 0x2F)) FanOn();
-  if ((fan1ret == 0x10) && (fan2ret == 0x20)) FanOff();
+  if (((fan1ret == 0x1F) || (fan2ret == 0x2F)) && (fanOn == 0)) FanOn();
+  if ((fan1ret == 0x10) && (fan2ret == 0x20) && (fanOn == 0)) FanOff();
   byte mist1ret = checkRelays(Mist, 1, 1);
   byte mist2ret = checkRelays(Mist, 2, 1);
   byte mist3ret = checkRelays(Mist2, 1, 1);
@@ -6318,7 +6408,7 @@ void lowTemp()
       //heater += 2;
       HeaterOn();
     }
-    if ((heatOn == 1) && (temp1 > (heater + 0.5)))
+    if ((heatOn == 1) && (temp1 >= (heater + 0.5)))
     {
       heatOn = 0;
       //heater -= 2;
@@ -6332,13 +6422,13 @@ void hiTemp()
 {
   if (prevhiTemp != temp1)
   {
-    if ((temp1 > fan) && (fanOn == 0))
+    if ((temp1 >= fan) && (fanOn == 0))
     {
       fanOn = 1;
       //fan -= 2;
       FanOn();
     }
-    if ((fanOn == 1) && (temp1 < (fan - 0.5)))
+    if ((fanOn == 1) && (temp1 <= (fan - 0.5)))
     {
       fanOn = 0;
       //fan  += 2;
@@ -6357,11 +6447,11 @@ void listActiveAlarms()
   myGLCD.clrScr();
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char a[] PROGMEM = "Alarm Dump";
+  char a[] PROGMEM = {"Alarm Dump"};
   Serial.println(a);
   Serial.println();
   myGLCD.print(a, 0, 20);
-  const char b[] PROGMEM = "Lights";
+  char b[] PROGMEM = "Lights";
   Serial.println(b);
   Serial.println();
   myGLCD.print(b, 10, 40);
@@ -6377,7 +6467,7 @@ void listActiveAlarms()
   Serial.println();
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char c[] PROGMEM = "Fogger";
+  char c[] PROGMEM = "Fogger";
   myGLCD.print(c, 10, 110);
   Serial.println(c);
   Serial.println();
@@ -6435,7 +6525,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char d[] PROGMEM = "Fog    1_Off";
+    char d[] PROGMEM = "Fog    1_Off";
     myGLCD.print(d, 20, 150);
     Serial.print(d);
     Serial.println();
@@ -6492,14 +6582,14 @@ void listActiveAlarms()
   }
   else
   {
-    const char e[] PROGMEM = "Fog    2_Off";
+    char e[] PROGMEM = "Fog    2_Off";
     myGLCD.print(e, 20, 160);
     Serial.println(e);
     Serial.println();
   }
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char f[] PROGMEM = "Misting";
+  char f[] PROGMEM = "Misting";
   myGLCD.print(f, 10, 180);
   Serial.println(f);
   Serial.println();
@@ -6557,7 +6647,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char g[] PROGMEM = "Mist   1_Off";
+    char g[] PROGMEM = "Mist   1_Off";
     myGLCD.print(g, 20, 220);
     Serial.print(g);
     Serial.println();
@@ -6614,7 +6704,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char h[] PROGMEM = "Mist   2_Off";
+    char h[] PROGMEM = "Mist   2_Off";
     myGLCD.print(h, 20, 230);
     Serial.print(h);
     Serial.println();
@@ -6671,7 +6761,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char i[] PROGMEM = "Mist   3_Off";
+    char i[] PROGMEM = "Mist   3_Off";
     myGLCD.print(i, 20, 240);
     Serial.print(i);
     Serial.println();
@@ -6728,14 +6818,14 @@ void listActiveAlarms()
   }
   else
   {
-    const char j[] PROGMEM = "Mist   4_Off";
+    char j[] PROGMEM = "Mist   4_Off";
     myGLCD.print(j, 20, 250);
     Serial.println(j);
     Serial.println();
   }
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char k[] PROGMEM = "Fan";
+  char k[] PROGMEM = "Fan";
   myGLCD.print(k, 10, 270);
   Serial.println(k);
   Serial.println();
@@ -6793,7 +6883,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char l[] PROGMEM = "Fan    1_Off";
+    char l[] PROGMEM = "Fan    1_Off";
     myGLCD.print(l, 20, 310);
     Serial.print(l);
     Serial.println();
@@ -6850,25 +6940,28 @@ void listActiveAlarms()
   }
   else
   {
-    const char m[] PROGMEM = "Fan    2_Off";
+    char m[] PROGMEM = "Fan    2_Off";
     myGLCD.print(m, 20, 320);
     Serial.println(m);
     Serial.println();
   }
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char n[] PROGMEM = "Hi/Lo";
+  char n[] PROGMEM = "Hi/Lo";
   myGLCD.print(n, 10, 340);
   Serial.println(n);
   Serial.println();
   myGLCD.setFont(Sinclair_S);
   myGLCD.setColor(134, 250, 124);
-  char outstr1[10];
-  char outstr2[10];
+  char outstr1[5];
+  char outstr2[5];
   if (temp1Hi != 0 && temp1Lo != 65535)
   {
-    dtostrf(temp1Hi / 100.0, 5, 2, outstr2);
-    dtostrf(temp1Lo / 100.0, 5, 2, outstr1);
+    tempfc((temp1Hi / 100.0), outstr2);
+    tempfc((temp1Lo / 100.0), outstr1);
+
+    //    dtostrf(temp1Hi / 100.0, 5, 2, outstr2);
+    //    dtostrf(temp1Lo / 100.0, 5, 2, outstr1);
     sprintf_P(buf, PSTR("Temp1 Lo:%s Hi:%s"), outstr1, outstr2 );
     myGLCD.print(buf, 20, 380);
     Serial.print(buf);
@@ -6876,8 +6969,11 @@ void listActiveAlarms()
   }
   if (temp2Hi != 0 && temp2Lo != 65535)
   {
-    dtostrf(temp2Hi / 100.0, 5, 2, outstr2);
-    dtostrf(temp2Lo / 100.0, 5, 2, outstr1);
+    tempfc((temp2Hi / 100.0), outstr2);
+    tempfc((temp2Lo / 100.0), outstr1);
+
+    //    dtostrf(temp2Hi / 100.0, 5, 2, outstr2);
+    //    dtostrf(temp2Lo / 100.0, 5, 2, outstr1);
     sprintf_P(buf, PSTR("Temp2 Lo:%s Hi:%s"), outstr1, outstr2);
     myGLCD.print(buf, 20, 390);
     Serial.print(buf);
@@ -6885,8 +6981,10 @@ void listActiveAlarms()
   }
   if (temp3Hi != 0 && temp3Lo != 65535)
   {
-    dtostrf(temp3Hi / 100.0, 5, 2, outstr2);
-    dtostrf(temp3Lo / 100.0, 5, 2, outstr1);
+    tempfc((temp3Hi / 100.0), outstr2);
+    tempfc((temp3Lo / 100.0), outstr1);
+    //    dtostrf(temp3Hi / 100.0, 5, 2, outstr2);
+    //    dtostrf(temp3Lo / 100.0, 5, 2, outstr1);
     sprintf_P(buf, PSTR("Temp3 Lo:%s Hi:%s"), outstr1, outstr2);
     myGLCD.print(buf, 20, 400);
     Serial.print(buf);
@@ -6894,8 +6992,8 @@ void listActiveAlarms()
   }
   if (hum1Hi != 0 && hum1Lo != 65535)
   {
-    dtostrf(hum1Hi / 100.0, 5, 2, outstr2);
-    dtostrf(hum1Lo / 100.0, 5, 2, outstr1);
+    dtostrf(hum1Hi / 100.0, 4, 1, outstr2);
+    dtostrf(hum1Lo / 100.0, 4, 1, outstr1);
     sprintf_P(buf, PSTR("Hum 1 Lo:%s Hi:%s"), outstr1, outstr2);
     myGLCD.print(buf, 20, 410);
     Serial.println(buf);
@@ -7043,10 +7141,4 @@ void HeaterOff() {                                                   //
 #endif
   relayOff(pwrTemp1);
 }
-//////////////////////////////////////////////////////////////////////////////////////////////
-void ubuntuRed()                                                                                    //
-{ //                                                                                                //
-  myGLCD.setColor(255, 77, 0);                                                                      //
-  myGLCD.setFont(Ubuntubold);                                                                       //
-} //                                                                                                //
 

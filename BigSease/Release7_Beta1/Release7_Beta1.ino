@@ -6357,11 +6357,11 @@ void listActiveAlarms()
   myGLCD.clrScr();
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char a[] PROGMEM = "Alarm Dump";
+  char a[] PROGMEM = {"Alarm Dump"};
   Serial.println(a);
   Serial.println();
   myGLCD.print(a, 0, 20);
-  const char b[] PROGMEM = "Lights";
+  char b[] PROGMEM = "Lights";
   Serial.println(b);
   Serial.println();
   myGLCD.print(b, 10, 40);
@@ -6377,7 +6377,7 @@ void listActiveAlarms()
   Serial.println();
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char c[] PROGMEM = "Fogger";
+  char c[] PROGMEM = "Fogger";
   myGLCD.print(c, 10, 110);
   Serial.println(c);
   Serial.println();
@@ -6435,7 +6435,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char d[] PROGMEM = "Fog    1_Off";
+    char d[] PROGMEM = "Fog    1_Off";
     myGLCD.print(d, 20, 150);
     Serial.print(d);
     Serial.println();
@@ -6492,14 +6492,14 @@ void listActiveAlarms()
   }
   else
   {
-    const char e[] PROGMEM = "Fog    2_Off";
+    char e[] PROGMEM = "Fog    2_Off";
     myGLCD.print(e, 20, 160);
     Serial.println(e);
     Serial.println();
   }
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char f[] PROGMEM = "Misting";
+  char f[] PROGMEM = "Misting";
   myGLCD.print(f, 10, 180);
   Serial.println(f);
   Serial.println();
@@ -6557,7 +6557,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char g[] PROGMEM = "Mist   1_Off";
+    char g[] PROGMEM = "Mist   1_Off";
     myGLCD.print(g, 20, 220);
     Serial.print(g);
     Serial.println();
@@ -6614,7 +6614,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char h[] PROGMEM = "Mist   2_Off";
+    char h[] PROGMEM = "Mist   2_Off";
     myGLCD.print(h, 20, 230);
     Serial.print(h);
     Serial.println();
@@ -6671,7 +6671,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char i[] PROGMEM = "Mist   3_Off";
+    char i[] PROGMEM = "Mist   3_Off";
     myGLCD.print(i, 20, 240);
     Serial.print(i);
     Serial.println();
@@ -6728,14 +6728,14 @@ void listActiveAlarms()
   }
   else
   {
-    const char j[] PROGMEM = "Mist   4_Off";
+    char j[] PROGMEM = "Mist   4_Off";
     myGLCD.print(j, 20, 250);
     Serial.println(j);
     Serial.println();
   }
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char k[] PROGMEM = "Fan";
+  char k[] PROGMEM = "Fan";
   myGLCD.print(k, 10, 270);
   Serial.println(k);
   Serial.println();
@@ -6793,7 +6793,7 @@ void listActiveAlarms()
   }
   else
   {
-    const char l[] PROGMEM = "Fan    1_Off";
+    char l[] PROGMEM = "Fan    1_Off";
     myGLCD.print(l, 20, 310);
     Serial.print(l);
     Serial.println();
@@ -6850,14 +6850,14 @@ void listActiveAlarms()
   }
   else
   {
-    const char m[] PROGMEM = "Fan    2_Off";
+    char m[] PROGMEM = "Fan    2_Off";
     myGLCD.print(m, 20, 320);
     Serial.println(m);
     Serial.println();
   }
   myGLCD.setColor(19 , 183, 8);
   myGLCD.setFont(arial_bold);
-  const char n[] PROGMEM = "Hi/Lo";
+  char n[] PROGMEM = "Hi/Lo";
   myGLCD.print(n, 10, 340);
   Serial.println(n);
   Serial.println();
@@ -7043,10 +7043,4 @@ void HeaterOff() {                                                   //
 #endif
   relayOff(pwrTemp1);
 }
-//////////////////////////////////////////////////////////////////////////////////////////////
-void ubuntuRed()                                                                                    //
-{ //                                                                                                //
-  myGLCD.setColor(255, 77, 0);                                                                      //
-  myGLCD.setFont(Ubuntubold);                                                                       //
-} //                                                                                                //
 

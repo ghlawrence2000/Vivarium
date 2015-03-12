@@ -1,6 +1,15 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                    Ubuntubold In Red Is Commonly Used So Do It In A Function                     //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+extern uint8_t Ubuntubold[];                                                                        //
+extern UTFT myGLCD;                                                                                 //
+extern byte tempUnits;
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+void ubuntuRed()                                                                                    //
+{ //                                                                                                //
+  myGLCD.setColor(255, 77, 0);                                                                      //
+  myGLCD.setFont(Ubuntubold);                                                                       //
+} //                                                                                                //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                        Main Structure To Hold Our Scheduling Information                         //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,3 +133,20 @@ unsigned long mySecs(byte days, byte hours, byte mins, byte secs)               
   return ((days * 86400UL) + (hours * 3600UL) + (mins * 60UL) + secs);                              //
 } //                                                                                                //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+void tempfc(float temps, char bufs[6] )
+{
+  if (tempUnits == 0xF0)
+  {
+    dtostrf(temps, 4, 1, bufs);
+  }
+  else
+  {
+    dtostrf((((temps - 32.0) / 9.0) * 5.0), 4, 1, bufs);
+  }
+#if debug
+  Serial.print(F("tempfc "));
+  Serial.print(temps);
+  Serial.print(F(" "));
+  Serial.println(bufs);
+#endif
+}
